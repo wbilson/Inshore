@@ -72,6 +72,8 @@ library(SSModel)#v 1.0-3
 library (openxlsx)
 library(compareDF)
 library(tidyverse)
+#remotes::install_github('jsameoto/rosettafish')
+library(rosettafish)
 
 #### Import Mar-scal functions 
 #funcs <- c("https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/CreateExcelModelFile.R",
