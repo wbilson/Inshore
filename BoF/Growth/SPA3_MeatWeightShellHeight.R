@@ -20,15 +20,15 @@ library(lubridate)
 #install.packages("lme4", type = "source")
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - not should match year of cruise below 
-cruise <- "BI2025"  #note should match year for surveyyear set above 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - not should match year of cruise below 
+cruise <- "BI2026"  #note should match year for surveyyear set above 
 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "3"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6" 
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"

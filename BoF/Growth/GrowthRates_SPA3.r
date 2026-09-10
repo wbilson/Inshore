@@ -15,9 +15,9 @@ options(stringsAsFactors = FALSE)
 # ///.... DEFINE THESE ENTRIES ....////
 
 #DEFINE: year, area
-year <- 2025  #this is the survey year
+year <- 2026  #this is the survey year
 area <- "3"  #SPAs 1A, 1B and 4 and 5 all modelled together, therefore choice entry here is "1A1B4and5", "3", "6"
-assessmentyear <- 2025 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
+assessmentyear <- 2026 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
 
 
 # DEFINE: load required workspace with model objects (set for year YYYY)
@@ -167,18 +167,18 @@ growthrate.rec.pred <- data.frame(YEAR = c(year), MW.actual.rec = NA, MW.pred.re
 
 #commercial
 growthrate.com.pred$MW.actual.com <- predict(model.object,newdata=data.frame(Log.HEIGHT.CTR=log(SH.object$SHactual.Com[SH.object$years == year])-mean(test.data$Log.HEIGHT), Log.DEPTH.CTR=log(abs(depth))-mean(test.data$Log.DEPTH)),
-                                re.form=~0,type="response") #15.69366 
+                                re.form=~0,type="response") # 15.4808 
 
 growthrate.com.pred$MW.pred.com <- predict(model.object,newdata=data.frame(Log.HEIGHT.CTR=log(SH.object$SHpredict.Com[SH.object$years == year])-mean(test.data$Log.HEIGHT), Log.DEPTH.CTR=log(abs(depth))-mean(test.data$Log.DEPTH)),
-                              re.form=~0,type="response") # 17.10484 
+                              re.form=~0,type="response") # 16.90129 
 
 #recruit
 growthrate.rec.pred$MW.actual.rec <- predict(model.object,newdata=data.frame(Log.HEIGHT.CTR=log(SH.object$SHactual.Rec[SH.object$years == year])-mean(test.data$Log.HEIGHT), Log.DEPTH.CTR=log(abs(depth))-mean(test.data$Log.DEPTH)),
-                                re.form=~0,type="response") #6.212358 
+                                re.form=~0,type="response") #5.195234 
 
 
 growthrate.rec.pred$MW.pred.rec <- predict(model.object,newdata=data.frame(Log.HEIGHT.CTR=log(SH.object$SHpredict.Rec[SH.object$years == year])-mean(test.data$Log.HEIGHT), Log.DEPTH.CTR=log(abs(depth))-mean(test.data$Log.DEPTH)),
-                              re.form=~0,type="response") #8.588651
+                              re.form=~0,type="response") #7.475083
 
 
 spa3.predictedgr.com

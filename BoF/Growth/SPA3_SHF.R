@@ -30,14 +30,14 @@ for(fun in funcs)
 # ///.... DEFINE THESE ENTRIES ....////
 
 # Define:
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-surveyyear <- 2025  #This is the last survey year 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+surveyyear <- 2026  #This is the last survey year 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "3"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6" 
-cruise <- "'BI2025'"
+cruise <- "'BI2026'"
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
 
@@ -550,7 +550,7 @@ In.aftermeans<-sapply(split(In.After[c(11:50)], In.After$YEAR), function(x){appl
 y.lim <-c(0,50)
 data.ref<-In.beforemeans #In.beforemeans  ,  SMB.beforemeans   , out.beforemeans
 data.year<-In.aftermeans #In.aftermeans, SMB.aftermeans, out.aftermeans
-year <- 2023 #Update as year t-1
+year <- surveyyear-1 #Update as year t-1
 tows <- length(after) #Update length(after)
 
 
@@ -597,7 +597,7 @@ out.aftermeans<-sapply(split(out.after[c(11:50)], out.after$YEAR), function(x){a
 y.lim <-c(0,50)
 data.ref<-out.beforemeans #In.beforemeans  ,  SMB.beforemeans   , out.beforemeans
 data.year<-out.aftermeans #In.aftermeans, SMB.aftermeans, out.aftermeans
-year <- 2023 #Update year t-1
+year <- surveyyear-1 #Update year t-1
 tows <- length(after) 
 
 png(paste0(path.directory,assessmentyear, "/Assessment/Figures/SPA3_OuterVMS_repeats_SHF.png"), type="cairo", width=20, height=15, units = "cm", res=400)

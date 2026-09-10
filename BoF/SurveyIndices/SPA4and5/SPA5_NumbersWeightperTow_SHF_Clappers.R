@@ -20,13 +20,13 @@ library(ggplot2)
 library(cowplot)
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle",  uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle",  uid)
 
-surveyyear <- 2025  #This is the last survey year 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "1A1B4and5"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6" 
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
@@ -186,7 +186,7 @@ spa5.numbers.plot <- ggplot(data = SPA5.Numbers, aes(x=Year, y=Mean.nums, col=Si
   scale_linetype_manual(values=c("solid", "dotted"))+
   scale_color_manual( values=c('black','red')) + 
   geom_hline(yintercept = median(SPA5.Numbers$Mean.nums[SPA5.Numbers$Year>=1990&SPA5.Numbers$Year<=2008&SPA5.Numbers$Size=="Commercial"], na.rm=TRUE), col="black", linetype="longdash") +
-  geom_hline(yintercept = median(SPA5.Numbers$Mean.nums[SPA5.Numbers$Year>=1990&SPA5.Numbers$Year<=2008&SPA5.Numbers$Size=="Recruit"], na.rm=TRUE), col="red", linetype="dotdash")
+  geom_hline(yintercept = median(SPA5.Numbers$Mean.nums[SPA5.Numbers$Year>=1990&SPA5.Numbers$Year<=2008&SPA5.Numbers$Size=="Recruit"], na.rm=TRUE), col="blue", linetype="dotdash")
 spa5.numbers.plot
 
 spa5.weight.plot <- ggplot(data = SPA5.Weight, aes(x=Year, y= kg, col=Size, pch=Size)) + 
@@ -198,7 +198,7 @@ spa5.weight.plot <- ggplot(data = SPA5.Weight, aes(x=Year, y= kg, col=Size, pch=
   scale_color_manual( values=c('black','red')) + 
   xlim(c(min(SPA5.Numbers$Year),surveyyear)) + 
   geom_hline(yintercept = median(SPA5.Weight$kg[SPA5.Weight$Year>=1990&SPA5.Weight$Year<=2008&SPA5.Weight$Size=="Commercial"], na.rm=TRUE), col="black", linetype="longdash") +
- geom_hline(yintercept = median(SPA5.Weight$kg[SPA5.Weight$Year>=1990&SPA5.Weight$Year<=2008&SPA5.Weight$Size=="Recruit"], na.rm=TRUE), col="red", linetype="dotdash")
+ geom_hline(yintercept = median(SPA5.Weight$kg[SPA5.Weight$Year>=1990&SPA5.Weight$Year<=2008&SPA5.Weight$Size=="Recruit"], na.rm=TRUE), col="blue", linetype="dotdash")
 spa5.weight.plot
 
 png(paste0(path.directory,assessmentyear,"/Assessment/Figures/SPA5_NumberWeightPerTow",surveyyear,".png"), type="cairo", width=35, height=25, units = "cm", res=300)
@@ -315,7 +315,7 @@ spa5.dead.numbers.plot <- ggplot(data = SPA5.Numbers.dead, aes(x=Year, y=Mean.nu
   scale_linetype_manual(values=c("solid", "dotted"))+
   scale_color_manual( values=c('black','red')) + 
   geom_hline(yintercept = median(SPA5.Numbers.dead$Mean.nums[SPA5.Numbers.dead$Year>=1990&SPA5.Numbers.dead$Year<=2008&SPA5.Numbers.dead$Size=="Commercial"], na.rm=TRUE), col="black", linetype="longdash") +
-  geom_hline(yintercept = median(SPA5.Numbers.dead$Mean.nums[SPA5.Numbers.dead$Year>=1990&SPA5.Numbers.dead$Year<=2008&SPA5.Numbers.dead$Size=="Recruit"], na.rm=TRUE), col="red", linetype="dotdash")
+  geom_hline(yintercept = median(SPA5.Numbers.dead$Mean.nums[SPA5.Numbers.dead$Year>=1990&SPA5.Numbers.dead$Year<=2008&SPA5.Numbers.dead$Size=="Recruit"], na.rm=TRUE), col="blue", linetype="dotdash")
 spa5.dead.numbers.plot
 #separate current (2014+) from "old" series
 

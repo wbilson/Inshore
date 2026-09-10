@@ -16,9 +16,9 @@ options(stringsAsFactors = FALSE)
 # ///.... DEFINE THESE ENTRIES ....////
 
 #DEFINE: year, area
-year <- 2025  #this is the survey year
+year <- 2026  #this is the survey year
 area <- "6"  # choice entry here is "1A1B4and5", "3", "6";  recall SPAs 1A, 1B and 4 and 5 all modelled together
-assessmentyear <- 2025 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
+assessmentyear <- 2026 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
 
 
 # DEFINE: load required workspace with model objects - current year 
