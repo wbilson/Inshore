@@ -17,9 +17,9 @@ options(stringsAsFactors = FALSE)
 # ///.... DEFINE THESE ENTRIES ....////
 
 #DEFINE: year, area
-year <- 2025  #this is the survey year
+year <- 2026  #this is the survey year
 area <- "1A1B4and5"  #SPAs 1A, 1B and 4 and 5 all modelled together, therefore choice entry here is "1A1B4and5", "3", "6"
-assessmentyear <- 2025 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
+assessmentyear <- 2026 #this is the year you are running your assessment in -- corresponds to the assessment folder year name e.g. INSHORE SCALLOP/2020/Assessment..
 
 # DEFINE: load required workspace with model objects -- should be from current year of assessment, eg. if survey from 2021 and running assessment in 2021 this is in 2021 assessment folder 
 load(paste0("Y:/Inshore/Assessment/BoF/",year,"/Assessment/Data/Growth/SPA1A1B4and5/BFgrowth",year,".RData"))

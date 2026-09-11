@@ -55,8 +55,8 @@ options(stringsAsFactors = FALSE)
 #DEFINE:
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-assessmentyear <- 2025 #year in which you are conducting the assessment 
-surveyyear <- 2025  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
+assessmentyear <- 2026 #year in which you are conducting the assessment 
+surveyyear <- 2026  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
 area <- "1B"  #this would be the SPA, for entries options are to use: 1A, 1B, 3, 4, or 6  
 
 #Reference Points 
@@ -65,8 +65,8 @@ USR <- 1800
 
 # Set the value for catch next year, this is used in SSModel.plot.median() after the model runs 
 # This value should be the interim TAC in the area.
-catch.next.year <- 125
-
+catch.next.year <- 104 #2076.801*0.05 = 103.8  Interims were not decided at the time of test running the model so we are using 5% of estimated biomass from 1 year projections of 2025 model which assumes growth (predicted g and gr) and m (5 year mean) ) #SPA1B projected median biomass for 2026 is 2076.801
+ 
 #required packages
 library(SSModel)#v 1.0-3
 library (openxlsx)
@@ -118,8 +118,8 @@ for(fun in funcs)
 # 9) when satisfied with the table, re-name it to remove the date. E.g. SPAxx_ModelData_R.xlsx 
 
 CreateExcelModelFile(direct = direct, 
-                     assessmentyear=2025, surveyyear = 2025, 
-                     area = "1B", LastYearsModelRData = "SPA1B_Model_2024", 
+                     assessmentyear=2026, surveyyear = 2026, 
+                     area = "1B", LastYearsModelRData = "SPA1B_Model_2025", 
                      savefile = T)
 
 # for testing only (using FK private repo): 
@@ -140,7 +140,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 #parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep","IRrep")
 
 # Bring in the data, you will need to update this with the latest numbers!
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1B_ModelData_R_2025-10-30.xlsx"),sheet = "AlignedForModel", cols=1:13) 
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1B_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13) 
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
 

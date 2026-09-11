@@ -21,13 +21,13 @@ source("Y:/Inshore/Assessment/BoF/SurveyDesignTables/BoFstratadef.R")
 #source("Y:/Inshore/BoF/SurveyDesignTables/BoFstratadef.R")
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "1A1B4and5"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6" 
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
@@ -143,7 +143,7 @@ data$Mean.nums[data$Year==2020] <- NA #since don't want 2020 to plot in figures
 SPA4.ClapNumbers.per.tow.plot <- ggplot(data = data, aes(x=Year, y=Mean.nums, col=Size, pch = Size)) +
   geom_point() + geom_line(aes(linetype = Size)) + theme_bw() + 
   ylab("Survey mean no./tow") + xlab("Year") + 
-  theme(legend.position = c(0.9, 0.92)) + 
+  theme(legend.position = c(0.8, 0.92)) + 
   scale_linetype_manual(values=c("solid", "dotted"))+
   scale_color_manual(values=c('black','red'))
 SPA4.ClapNumbers.per.tow.plot
@@ -151,7 +151,7 @@ SPA4.ClapNumbers.per.tow.plot
 SPA4.ClapNumbers.per.tow.plot.recent <- ggplot(data = data[data$Year>=2005,], aes(x=Year, y=Mean.nums, col=Size, pch = Size)) +
   geom_point() + geom_line(aes(linetype = Size)) + theme_bw() + 
   ylab("Survey mean no./tow") + xlab("Year") + 
-  theme(legend.position = c(0.8, 0.9)) + 
+  theme(legend.position = c(0.7, 0.9)) + 
   scale_linetype_manual(values=c("solid", "dotted"))+
   scale_color_manual(values=c('black','red'))
 SPA4.ClapNumbers.per.tow.plot.recent

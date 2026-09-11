@@ -37,13 +37,13 @@ outvms <- read.csv("Y:/Inshore/Assessment/BoF/2015/SPA6/Survey/SPA6_VMS_OUT_R_fi
 #outvms <- read.csv("Y:/Inshore/BoF/2015/SPA6/Survey/SPA6_VMS_OUT_R_final_MOD.csv")
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "6"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6" 
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
@@ -444,19 +444,26 @@ test.2017 <- spr(GMlined2016$TOW_NO[GMlined2016$VMSAREA==STRATA.ID],apply(GMline
 	K <- summary(test.2023,summary(	test.2022 , summary(	test.2021 , summary (test.2019,summary (test.2018, summary (test.2017, summary (test.2016, summary(test.2015, summary(test.2014, summary(test.2013, summary(test.2012, summary(test.2011, summary(test.2010, summary(test.2009, summary (test.2008, summary(test.2007,summary(test.2006)))))))))))))))))
 	spr.est[spr.est$Year==2023,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 	
-#2024/2024
+#2023/2024
 	test.2024 <- spr(GMlined2023$TOW_NO[GMlined2023$VMSAREA==STRATA.ID],apply(GMlined2023[GMlined2023$VMSAREA==STRATA.ID,24:50],1,sum),
 	                 GMlined2024$TOW_NO[GMlined2024$VMSAREA==STRATA.ID],apply(GMlined2024[GMlined2024$VMSAREA==STRATA.ID,27:50],1,sum),
 	                 crossref.GM.2024[crossref.GM.2024$VMSAREA==STRATA.ID,c("TOW_NO_REF","TOW_NO")])
 	K <- summary(test.2024,summary(test.2023,summary(	test.2022 , summary(	test.2021 , summary (test.2019,summary (test.2018, summary (test.2017, summary (test.2016, summary(test.2015, summary(test.2014, summary(test.2013, summary(test.2012, summary(test.2011, summary(test.2010, summary(test.2009, summary (test.2008, summary(test.2007,summary(test.2006))))))))))))))))))
 	spr.est[spr.est$Year==2024,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 	
-#2025/2025
+#2024/2025
 	test.2025 <- spr(GMlined2024$TOW_NO[GMlined2024$VMSAREA==STRATA.ID],apply(GMlined2024[GMlined2024$VMSAREA==STRATA.ID,24:50],1,sum),
 	                 GMlined2025$TOW_NO[GMlined2025$VMSAREA==STRATA.ID],apply(GMlined2025[GMlined2025$VMSAREA==STRATA.ID,27:50],1,sum),
 	                 crossref.GM.2025[crossref.GM.2025$VMSAREA==STRATA.ID,c("TOW_NO_REF","TOW_NO")])
 	K <- summary(test.2025,summary(test.2024,summary(test.2023,summary(	test.2022 , summary(	test.2021 , summary (test.2019,summary (test.2018, summary (test.2017, summary (test.2016, summary(test.2015, summary(test.2014, summary(test.2013, summary(test.2012, summary(test.2011, summary(test.2010, summary(test.2009, summary (test.2008, summary(test.2007,summary(test.2006)))))))))))))))))))
 	spr.est[spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
+	
+#2025/2026
+	test.2026 <- spr(GMlined2025$TOW_NO[GMlined2025$VMSAREA==STRATA.ID],apply(GMlined2025[GMlined2025$VMSAREA==STRATA.ID,24:50],1,sum),
+	                 GMlined2026$TOW_NO[GMlined2026$VMSAREA==STRATA.ID],apply(GMlined2026[GMlined2026$VMSAREA==STRATA.ID,27:50],1,sum),
+	                 crossref.GM.2026[crossref.GM.2026$VMSAREA==STRATA.ID,c("TOW_NO_REF","TOW_NO")])
+	K <- summary(test.2026,summary(test.2025,summary(test.2024,summary(test.2023,summary(	test.2022 , summary(	test.2021 , summary (test.2019,summary (test.2018, summary (test.2017, summary (test.2016, summary(test.2015, summary(test.2014, summary(test.2013, summary(test.2012, summary(test.2011, summary(test.2010, summary(test.2009, summary (test.2008, summary(test.2007,summary(test.2006))))))))))))))))))))
+	spr.est[spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 	
 spr.est
 
@@ -646,6 +653,13 @@ testunlined.2017 <- spr(GMunlined2016$TOW_NO[GMunlined2016$VMSAREA==STRATA.ID],a
 	K <- summary(testunlined.2025, summary(testunlined.2024,summary(testunlined.2023,summary(testunlined.2022, summary(testunlined.2021, summary (testunlined.2019, summary (testunlined.2018, summary (testunlined.2017, summary (testunlined.2016, summary(testunlined.2015, summary(testunlined.2014, summary(testunlined.2013, summary(testunlined.2012, summary(testunlined.2011, summary(testunlined.2010, summary(testunlined.2009, summary (testunlined.2008, summary(testunlined.2007,summary(testunlined.2006)))))))))))))))))))  
 	spr.est.unlined[spr.est.unlined$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 	
+	
+#2025/2026
+	testunlined.2026 <- spr(GMunlined2025$TOW_NO[GMunlined2025$VMSAREA==STRATA.ID],apply(GMunlined2025[GMunlined2025$VMSAREA==STRATA.ID,24:50],1,sum),
+	                        GMunlined2026$TOW_NO[GMunlined2026$VMSAREA==STRATA.ID],apply(GMunlined2026[GMunlined2026$VMSAREA==STRATA.ID,27:50],1,sum),
+	                        crossref.GM.2026[crossref.GM.2026$VMSAREA==STRATA.ID,c("TOW_NO_REF","TOW_NO")])
+	K <- summary(testunlined.2026,summary(testunlined.2025, summary(testunlined.2024,summary(testunlined.2023,summary(testunlined.2022, summary(testunlined.2021, summary (testunlined.2019, summary (testunlined.2018, summary (testunlined.2017, summary (testunlined.2016, summary(testunlined.2015, summary(testunlined.2014, summary(testunlined.2013, summary(testunlined.2012, summary(testunlined.2011, summary(testunlined.2010, summary(testunlined.2009, summary (testunlined.2008, summary(testunlined.2007,summary(testunlined.2006)))))))))))))))))))) 
+	spr.est.unlined[spr.est.unlined$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 	
 spr.est.unlined
 

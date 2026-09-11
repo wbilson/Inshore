@@ -29,13 +29,13 @@ for(fun in funcs)
 #strata.spa3<-c(22:24)
 
 # Define: 
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-surveyyear <- 2025  #This is the last survey year 
-assessmentyear <- 2025 #year in which you are conducting the survey 
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+surveyyear <- 2026  #This is the last survey year 
+assessmentyear <- 2026 #year in which you are conducting the survey 
 area <- "3"  #SPA assessing recall SPA 1A, 1B, and 4 are grouped; options: "1A1B4and5", "3", "6"
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
@@ -416,6 +416,13 @@ K<-summary(smbrec18)
 #plot(smbrec16) 
 SMB.rec.spr.est[SMB.rec.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026
+smbrec19 <- spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID==22],apply(livefreq2025[livefreq2025$STRATA_ID==22,21:23],1,sum),
+                livefreq2026$TOW_NO[livefreq2026$STRATA_ID==22],apply(livefreq2026[livefreq2026$STRATA_ID==22,24:26],1,sum),
+                crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==22,c("TOW_NO_REF","TOW_NO")]) # 
+
+K<-summary(smbrec19)
+SMB.rec.spr.est[SMB.rec.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 
 SMB.rec.spr.est
@@ -625,6 +632,14 @@ K<-summary(smb18,summary(smb17,summary(smb16, summary(smb15, summary(smb14, summ
 
 SMB.spr.est[SMB.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026
+smb19<-spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID==22],apply(livefreq2025[livefreq2025$STRATA_ID==22,24:50],1,sum),
+           livefreq2026$TOW_NO[livefreq2026$STRATA_ID==22],apply(livefreq2026[livefreq2026$STRATA_ID==22,27:50],1,sum),
+           crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==22,c("TOW_NO_REF","TOW_NO")])
+
+K<-summary(smb19,summary(smb18,summary(smb17,summary(smb16, summary(smb15, summary(smb14, summary(smb13, summary(smb12, summary (smb11, summary( smb10, summary (smb9, summary (smb8, summary (smb7, summary (smb6,summary (smb5,summary (smb4, summary (smb3, summary (smb2, summary (smb1)))))))))))))))))))
+
+SMB.spr.est[SMB.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 SMB.spr.est
 
@@ -828,6 +843,13 @@ inrec18<-spr(livefreq2024$TOW_NO[livefreq2024$STRATA_ID==99],apply(livefreq2024[
 K<-summary (inrec18)
 Inner.rec.spr.est[Inner.rec.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 #
+inrec19<-spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID==99],apply(livefreq2025[livefreq2025$STRATA_ID==99,21:23],1,sum),
+             livefreq2026$TOW_NO[livefreq2026$STRATA_ID==99],apply(livefreq2026[livefreq2026$STRATA_ID==99,24:26],1,sum),
+             crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==99,c("TOW_NO_REF","TOW_NO")])
+
+K<-summary (inrec19)
+Inner.rec.spr.est[Inner.rec.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 Inner.rec.spr.est
 
@@ -1020,7 +1042,14 @@ K <-  summary(incom18,summary(incom17,summary(incom16, summary(incom15,summary(i
 
 Inner.spr.est[Inner.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 
+incom19<-spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID==99],apply(livefreq2025[livefreq2025$STRATA_ID==99,24:50],1,sum),
+             livefreq2026$TOW_NO[livefreq2026$STRATA_ID==99],apply(livefreq2026[livefreq2026$STRATA_ID==99,27:50],1,sum),
+             crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==99,c("TOW_NO_REF","TOW_NO")])
 
+K <-  summary(incom19,summary(incom18,summary(incom17,summary(incom16, summary(incom15,summary(incom14, summary(incom13, summary(incom12, summary (incom11, summary(incom10, summary (incom9, summary (incom8,summary (incom7,summary (incom6, summary (incom5, summary (incom4, summary (incom3, summary (incom2, summary (incom1)))))))))))))))))))
+
+Inner.spr.est[Inner.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 Inner.spr.est
 
@@ -1221,6 +1250,14 @@ outrec17<-spr(livefreq2024$TOW_NO[livefreq2024$STRATA_ID%in%23:24],apply(livefre
 K<-summary(outrec17) #
 Outer.rec.spr.est [Outer.rec.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026  
+outrec18<-spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID%in%23:24],apply(livefreq2025[livefreq2025$STRATA_ID%in%23:24, 21:23],1,sum),
+              livefreq2026$TOW_NO[livefreq2026$STRATA_ID%in%23:24],apply(livefreq2026[livefreq2026$STRATA_ID%in%23:24, 24:26],1,sum),
+              crossref.spa3.2026[crossref.spa3.2026$STRATA_ID%in%23:24,c("TOW_NO_REF","TOW_NO")])
+
+K<-summary(outrec18) #
+Outer.rec.spr.est [Outer.rec.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
+
 Outer.rec.spr.est
 
 #in 2020 had no survey to linear interpolation from SPR estimate (note very different result from simple estimate)
@@ -1238,6 +1275,7 @@ SPA3.Outer.Rec <- rbind(SPA3.Outer.Rec.simple[SPA3.Outer.Rec.simple$Year<2007,],
 #Sub in simple estimates for years where SPR failed:
 SPA3.Outer.Rec[SPA3.Outer.Rec$Year==2019,] <- SPA3.Outer.Rec.simple[SPA3.Outer.Rec.simple$Year==2019,] ##Note no recruits found in the 11 repeated tows in 2018 in Outer VMS strata in 2018 so breaks 2019 SPR estimate - need to use SIMPLE estimate
 SPA3.Outer.Rec[SPA3.Outer.Rec$Year==2022,] <- SPA3.Outer.Rec.simple[SPA3.Outer.Rec.simple$Year==2022,]
+SPA3.Outer.Rec[SPA3.Outer.Rec$Year==2026,] <- SPA3.Outer.Rec.simple[SPA3.Outer.Rec.simple$Year==2026,]
 
 
 SPA3.Outer.Rec$cv <-sqrt(SPA3.Outer.Rec$var.y)/SPA3.Outer.Rec$Mean.nums
@@ -1419,6 +1457,15 @@ outcom18 <- spr(livefreq2024$TOW_NO[livefreq2024$STRATA_ID%in%23:24],apply(livef
 K <-summary(outcom18, summary(outcom17,summary(outcom16, summary(outcom15,summary(outcom14,summary(outcom13,summary(outcom12,summary (outcom11, summary(outcom10,summary (outcom9, summary (outcom8, summary (outcom7,summary (outcom6,summary (outcom5, summary (outcom4, (summary (outcom3, summary (outcom2, summary (outcom1))))))))))))))))))) 
 
 Outer.spr.est[Outer.spr.est$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
+
+#2025/2026 
+outcom19 <- spr(livefreq2025$TOW_NO[livefreq2025$STRATA_ID%in%23:24],apply(livefreq2025[livefreq2025$STRATA_ID%in%23:24, 24:50],1,sum),
+                livefreq2026$TOW_NO[livefreq2026$STRATA_ID%in%23:24],apply(livefreq2026[livefreq2026$STRATA_ID%in%23:24, 27:50],1,sum),
+                crossref.spa3.2026[crossref.spa3.2026$STRATA_ID%in%23:24,c("TOW_NO_REF","TOW_NO")])
+
+K <-summary(outcom19,summary(outcom18, summary(outcom17,summary(outcom16, summary(outcom15,summary(outcom14,summary(outcom13,summary(outcom12,summary (outcom11, summary(outcom10,summary (outcom9, summary (outcom8, summary (outcom7,summary (outcom6,summary (outcom5, summary (outcom4, (summary (outcom3, summary (outcom2, summary (outcom1))))))))))))))))))))
+
+Outer.spr.est[Outer.spr.est$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 
 Outer.spr.est
@@ -1624,6 +1671,13 @@ SMBr18<-spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID==22],apply(liveweight
 K <- summary(SMBr18) #
 SMB.rec.spr.estWt[SMB.rec.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected) 
 
+#2025/2026
+SMBr19<-spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID==22],apply(liveweight2025[liveweight2025$STRATA_ID==22,23:25],1,sum),
+            liveweight2026$TOW_NO[liveweight2026$STRATA_ID==22],apply(liveweight2026[liveweight2026$STRATA_ID==22,26:28],1,sum),
+            crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==22,c("TOW_NO_REF","TOW_NO")])
+K <- summary(SMBr19) #
+SMB.rec.spr.estWt[SMB.rec.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected) 
+
 SMB.rec.spr.estWt
 
 #make dataframe for all of SMB Recruit
@@ -1807,7 +1861,12 @@ SMBc18 <- spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID==22],apply(liveweig
 K <-  summary(SMBc18,summary(SMBc17,summary(SMBc16, summary(SMBc15, summary(SMBc14, summary(SMBc13,summary(SMBc12, summary (SMBc11,summary(SMBc10, summary (SMBc9, summary (SMBc8, summary (SMBc7,summary (SMBc6,summary (SMBc5, summary (SMBc4,summary (SMBc3,summary (SMBc2,summary (SMBc1))))))))))))))))))
 SMB.spr.estWt[SMB.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
-
+#2025/2026 
+SMBc19 <- spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID==22],apply(liveweight2025[liveweight2025$STRATA_ID==22,26:52],1,sum),
+              liveweight2026$TOW_NO[liveweight2026$STRATA_ID==22],apply(liveweight2026[liveweight2026$STRATA_ID==22,29:52],1,sum),
+              crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==22,c("TOW_NO_REF","TOW_NO")])
+K <-  summary(SMBc19,summary(SMBc18,summary(SMBc17,summary(SMBc16, summary(SMBc15, summary(SMBc14, summary(SMBc13,summary(SMBc12, summary (SMBc11,summary(SMBc10, summary (SMBc9, summary (SMBc8, summary (SMBc7,summary (SMBc6,summary (SMBc5, summary (SMBc4,summary (SMBc3,summary (SMBc2,summary (SMBc1)))))))))))))))))))
+SMB.spr.estWt[SMB.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 SMB.spr.estWt
 
@@ -2006,6 +2065,13 @@ INr18 <- spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID==99],apply(liveweigh
 K <- summary(INr18)  #
 Inner.rec.spr.estWt [Inner.rec.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 
+INr19 <- spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID==99],apply(liveweight2025[liveweight2025$STRATA_ID==99,23:25],1,sum),
+             liveweight2026$TOW_NO[liveweight2026$STRATA_ID==99],apply(liveweight2026[liveweight2026$STRATA_ID==99,26:28],1,sum),
+             crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==99,c("TOW_NO_REF","TOW_NO")])
+
+K <- summary(INr19)  #
+Inner.rec.spr.estWt [Inner.rec.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 Inner.rec.spr.estWt
 
@@ -2198,7 +2264,13 @@ INc18 <- spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID==99],apply(liveweigh
 K <- summary(INc18,summary(INc17,summary(INc16, summary(INc15, summary(INc14, summary(INc13,summary(INc12, summary (INc11,summary(INc10, summary (INc9, summary (INc8, summary (INc7,summary (INc6,summary (INc5, summary (INc4, summary (INc3,summary (INc2, summary (INc1))))))))))))))))))
 Inner.spr.estWt[Inner.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 
+INc19 <- spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID==99],apply(liveweight2025[liveweight2025$STRATA_ID==99,26:52],1,sum),
+             liveweight2026$TOW_NO[liveweight2026$STRATA_ID==99],apply(liveweight2026[liveweight2026$STRATA_ID==99,29:52],1,sum),
+             crossref.spa3.2026[crossref.spa3.2026$STRATA_ID==99,c("TOW_NO_REF","TOW_NO")])
 
+K <- summary(INc19,summary(INc18,summary(INc17,summary(INc16, summary(INc15, summary(INc14, summary(INc13,summary(INc12, summary (INc11,summary(INc10, summary (INc9, summary (INc8, summary (INc7,summary (INc6,summary (INc5, summary (INc4, summary (INc3,summary (INc2, summary (INc1)))))))))))))))))))
+Inner.spr.estWt[Inner.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 Inner.spr.estWt
 
@@ -2368,7 +2440,12 @@ OUTr18 <- spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID%in%23:24],apply(liv
 K<-summary(OUTr18)     
 Outer.rec.spr.estWt[Outer.rec.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 
+OUTr19 <- spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID%in%23:24],apply(liveweight2025[liveweight2025$STRATA_ID%in%23:24,23:25],1,sum),liveweight2026$TOW_NO[liveweight2026$STRATA_ID%in%23:24],apply(liveweight2026[liveweight2026$STRATA_ID%in%23:24,26:28],1,sum), 
+              crossref.spa3.2026[crossref.spa3.2026$STRATA_ID%in%23:24,c("TOW_NO_REF","TOW_NO")])
 
+K<-summary(OUTr19)     
+Outer.rec.spr.estWt[Outer.rec.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 Outer.rec.spr.estWt
 
@@ -2383,6 +2460,7 @@ SPA3.Outer.RecWt[SPA3.Outer.RecWt$Year==2019,] <- SPA3.Outer.RecWt.simple[SPA3.O
 SPA3.Outer.RecWt[SPA3.Outer.RecWt$Year==2020,] <- SPA3.Outer.RecWt.simple[SPA3.Outer.RecWt.simple$Year==2020,] #Bc no estimate in 2019 from SPR - need to use simple mean; must use simple mean for interpolation for 2020 
 SPA3.Outer.RecWt[SPA3.Outer.RecWt$Year==2022,] <- SPA3.Outer.RecWt.simple[SPA3.Outer.RecWt.simple$Year==2022,] 
 SPA3.Outer.RecWt[SPA3.Outer.RecWt$Year==2023,] <- SPA3.Outer.RecWt.simple[SPA3.Outer.RecWt.simple$Year==2023,] #Simple mean used because two repeated tows in 2023 were Exploratory in 2022.
+SPA3.Outer.RecWt[SPA3.Outer.RecWt$Year==2026,] <- SPA3.Outer.RecWt.simple[SPA3.Outer.RecWt.simple$Year==2026,]
 
 SPA3.Outer.RecWt$cv <- sqrt(SPA3.Outer.RecWt$var.y)/SPA3.Outer.RecWt$Mean.weight
 SPA3.Outer.RecWt$kg<-SPA3.Outer.RecWt$Mean.weight/1000
@@ -2544,7 +2622,12 @@ OUTc18 <- spr(liveweight2024$TOW_NO[liveweight2024$STRATA_ID%in%23:24],apply(liv
 K <-  summary(OUTc18, summary(OUTc17,summary(OUTc16, summary(OUTc15, summary(OUTc14, summary(OUTc13, summary(OUTc12, summary (OUTc11,summary(OUTc10, summary (OUTc9, summary (OUTc8, summary (OUTc7,summary (OUTc6,summary (OUTc5, summary (OUTc4, summary (OUTc3, summary (OUTc2,summary (OUTc1))))))))))))))))))
 Outer.spr.estWt[Outer.spr.estWt$Year==2025,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
+#2025/2026 
+OUTc19 <- spr(liveweight2025$TOW_NO[liveweight2025$STRATA_ID%in%23:24],apply(liveweight2025[liveweight2025$STRATA_ID%in%23:24,26:52],1,sum), liveweight2026$TOW_NO[liveweight2026$STRATA_ID%in%23:24],apply(liveweight2026[liveweight2026$STRATA_ID%in%23:24,29:52],1,sum),
+              crossref.spa3.2026[crossref.spa3.2026$STRATA_ID%in%23:24,c("TOW_NO_REF","TOW_NO")])
 
+K <-  summary(OUTc19, summary(OUTc18, summary(OUTc17,summary(OUTc16, summary(OUTc15, summary(OUTc14, summary(OUTc13, summary(OUTc12, summary (OUTc11,summary(OUTc10, summary (OUTc9, summary (OUTc8, summary (OUTc7,summary (OUTc6,summary (OUTc5, summary (OUTc4, summary (OUTc3, summary (OUTc2,summary (OUTc1)))))))))))))))))))
+Outer.spr.estWt[Outer.spr.estWt$Year==2026,c(2:3)] <- c(K$Yspr, K$var.Yspr.corrected)
 
 
 Outer.spr.estWt

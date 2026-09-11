@@ -49,8 +49,8 @@ options(stringsAsFactors = FALSE)
 #DEFINE:
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-assessmentyear <- 2025 #year in which you are conducting the assessment 
-surveyyear <- 2025  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
+assessmentyear <- 2026 #year in which you are conducting the assessment 
+surveyyear <- 2026  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
 area <- "1A"  #this would be the SPA, for entries options are to use: 1A, 1B, 3, 4, or 6 
 
 #Reference Points 
@@ -59,7 +59,8 @@ USR <- 1000
 
 # Set the value for catch next year, this is used in SSModel.plot.median() after the model runs and in the final year for the prediction evaluation figures
 # This value should be the interim TAC in the area (assuming running assessment in fall of recent survey year) 
-catch.next.year <- 150
+
+catch.next.year <- 83 #1661.702*0.05 #Interims were not decided at the time of test running the model so we are using 5% of estimated biomass from 1 year projections of 2025 model which assumes growth (predicted g and gr) and m (5 year mean) ) #SPA1A projected median biomass for 2026 is 1661.702
 
 #PACKAGES:
 #required packages
@@ -71,20 +72,6 @@ library(tidyverse)
 library(rosettafish)
 
 #### Import Mar-scal functions 
-#funcs <- c("https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/CreateExcelModelFile.R",
-#           "https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/SSModel_plot_median_new.r",
-#           "https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/SSModel_predict_summary_median.r",
-#           "https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/BoFmodelstats.R")
-#dir <- getwd()
-#for(fun in funcs) 
-#{
-#  temp <- dir
-#  download.file(fun,destfile = basename(fun))
-#  source(paste0(dir,"/",basename(fun)))
-#  file.remove(paste0(dir,"/",basename(fun)))
-#}
-
-
 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/CreateExcelModelFile.R",
            "https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/SSModel_plot_median_new.r",
            "https://raw.githubusercontent.com/Mar-scal/Inshore/master/BoF/Model/SSModel_predict_summary_median.r",
@@ -114,8 +101,8 @@ for(fun in funcs)
 # 9) when satisfied with the table, re-name it to remove the date. E.g. SPAxx_ModelData_R.xlsx 
 
 CreateExcelModelFile(direct = direct, 
-                     assessmentyear=2025, surveyyear = 2025, 
-                     area = "1A", LastYearsModelRData = "SPA1A_Model_2024", 
+                     assessmentyear=2026, surveyyear = 2026, 
+                     area = "1A", LastYearsModelRData = "SPA1A_Model_2025", 
                      savefile = T)
 
 # for testing only (using FK private repo): 
@@ -136,7 +123,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 #parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep","IRrep")
 
 # Bring in the data, you will need to update this with the latest numbers!
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1A_ModelData_R_2025-10-29.xlsx"),sheet = "AlignedForModel",cols=1:13)
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1A_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel",cols=1:13)
 
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)

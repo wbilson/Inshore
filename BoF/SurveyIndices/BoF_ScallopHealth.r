@@ -53,8 +53,8 @@ pwd <- keyring::key_get("Oracle", uid)
 #pwd <- pw.englishg
 
 #set year 
-survey.year <- 2025  #survey year
-assessmentyear <- 2025 #year in which you are providing advice for- determines where to save files to
+survey.year <- 2026  #survey year
+assessmentyear <- 2026 #year in which you are providing advice for- determines where to save files to
 path.directory <- "Y:/Inshore/Assessment/BoF/"
 #path.directory <- "Y:/Inshore/BoF/"
 
@@ -86,24 +86,25 @@ for(fun in funcs)
 # Find where tempfiles are stored
 temp <- tempfile()
 # Download this to the temp directory
-download.file("https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/inshore_boundaries/Inshore_Spatial_Layers_Mar2025.zip", temp)
+download.file("https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/inshore_boundaries/inshore_survey_strata/inshore_survey_strata.zip", temp)
 # Figure out what this file was saved as
 temp2 <- tempfile()
 # Unzip it
 unzip(zipfile=temp, exdir=temp2)
 
 # Now read in the shapefiles
-mgmt.zones.detailed <- st_read(paste0(temp2, "/Inshore_Spatial_Layers_Mar2025/Scallop_Strata.shp")) %>% 
+mgmt.zones.detailed <- st_read(paste0(temp2, "/Scallop_Strata.shp")) %>% 
   filter(Scal_Area != "SFA29W")
 
-mgmt.zones <- st_read(paste0(temp2,"/Inshore_Spatial_Layers_Mar2025/ScallopFishingAreas_2024.shp")) %>% 
+mgmt.zones <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/scallop_management_zones/ScallopFishingAreas_2024.shp") %>% 
   filter(str_starts(Area_Name, "SPA")) %>%  
   st_transform(crs = 32620)
 
-bathy_sf <- st_read(paste0(temp2,"/Inshore_Spatial_Layers_Mar2025/bathymetry_15m.shp")) 
+bathy_sf <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/bathymetry/bathymetry_15m.shp") 
 
-Land <- st_read(paste0(temp2,"/Inshore_Spatial_Layers_Mar2025/Atl_region_land.shp")) %>% 
+Land <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/other_boundaries/Atl_region_land.shp") %>% 
   st_transform(crs = 32620) 
+
 # -------------------------------Import WGTHGT DATA------------------------------------------
 
 #List of tows that have detailed samples
@@ -191,18 +192,27 @@ proportions_data <- myco.datw %>%
 table(proportions_data$prop.check)
 
 prop_data_4plot <- proportions_data %>% 
-  select(CRUISE, SPA, year, Y.prop, N.prop)
+  select(CRUISE, SPA, year, Y.prop, N.prop)%>%
+  group_by(CRUISE, SPA) 
 
 
 prop_data_4plot <- reshape2::melt(prop_data_4plot, id.vars = c("year", "SPA", "CRUISE"), value.name = "value")
+
+prop_data_4plot <- prop_data_4plot %>%
+  add_row(year = 2020, SPA = "SPA1A", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA1B", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA3", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA4", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA5", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA6", CRUISE = NA, variable = NA, value = NA)
+
 
 # plot Proportions
 plot <- ggplot(prop_data_4plot) +
   geom_bar(data=prop_data_4plot[prop_data_4plot$variable%in%c('N.prop','Y.prop'),],
            aes(year, value, fill=factor(variable, levels = c('N.prop','Y.prop'))), colour="black", stat="identity") +
   ylab("Proportion of samples with myco") +
-  #scale_x_continuous(breaks = seq(2018, year+3, 5),
-  # labels = c(1995, 2000, 2005, 2010, 2015, 2020, 2025))+
+  scale_x_continuous(breaks = seq(2018, survey.year, 2))+
   scale_fill_manual(values=c("skyblue3","salmon"), labels=c("No Myco","Myco"), name=NULL) +
   theme_bw()+
   theme(axis.title.x = element_blank(),
@@ -225,10 +235,11 @@ ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Dise
 #line plot:
 
 line_plot <- ggplot(proportions_data)+
-  geom_line(aes(x = year, y = Y.prop))+
+  geom_line(aes(x = year, y = Y.prop, group = SPA))+
   ylim(0, 1.0)+
   ylab("Proportion of Myco identified in samples")+
   theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_wrap(~ SPA)
 line_plot
 
@@ -237,13 +248,15 @@ ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Dise
 
 #Save as .CSV-----------------------------------------
 #By Tow
-write.csv(myco.datw, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Disease_Metrics/Myco_in_Meats_By_Tow.csv"))
+write.csv(myco.datw, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Myco_in_Meats_By_Tow.csv"))
 #By SPA
 proportions_data <- proportions_data %>% 
   select(-N.prop, -prop.check)
-write.csv(proportions_data, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Disease_metrics/Myco_in_Meats_By_SPA.csv"))
+write.csv(proportions_data, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Myco_in_Meats_By_SPA.csv"))
 
 # -------------------------------DISCOLOURED PROPORTION PLOTS-----------------------------------------
+
+############# Proportion of B's and C's ##################
 
 greymeat.dat <- sampled.dat %>% 
   group_by(CRUISE, tow) %>% 
@@ -256,9 +269,9 @@ greymeat.datw <- pivot_wider(greymeat.dat,
                              values_fill = 0)
 
 greymeat.datw <- greymeat.datw %>%
-  mutate(prop = (Moderate + Severe)/(Normal + Moderate + Severe)) %>% 
-  mutate(NUM_GREYMEAT = Moderate + Severe) %>% 
-  mutate(NUM_GREYMEAT = as.numeric(NUM_GREYMEAT)) %>% 
+  mutate(prop.Severe = (Severe)/(Normal + Moderate + Severe)) %>% 
+  mutate(prop.Moderate = (Moderate)/(Normal + Moderate + Severe)) %>% 
+  mutate(Severe = as.numeric(Severe)) %>% 
   unite(ID, c("CRUISE", "tow"), sep = ".", remove = FALSE)
 
 greymeat.datw <- merge(greymeat.datw, tow.dat, by = "ID", all.x = TRUE) %>% 
@@ -276,28 +289,37 @@ greymeat.datw <- merge(greymeat.datw, tow.dat, by = "ID", all.x = TRUE) %>%
 proportions_data <- greymeat.datw %>%
   group_by(CRUISE, SPA, year) %>%
   summarise(tot.Normal = sum(Normal),
-            tot.greymeat = sum(NUM_GREYMEAT),
+            tot.Moderate = sum(Moderate),
+            tot.Severe = sum(Severe),
             tot.all = sum(Normal + Moderate + Severe)) %>% 
   mutate(Normal.prop = tot.Normal/tot.all) %>%
-  mutate(greymeat.prop = tot.greymeat/tot.all) %>% 
-  mutate(prop.check = Normal.prop + greymeat.prop)
+  mutate(Moderate.prop = tot.Moderate/tot.all) %>%
+  mutate(Severe.prop = tot.Severe/tot.all) %>% 
+  mutate(prop.check = Normal.prop + Moderate.prop + Severe.prop)
 
 table(proportions_data$prop.check)
 
 prop_data_4plot <- proportions_data %>% 
-  select(CRUISE, SPA, year, Normal.prop , greymeat.prop)
+  select(CRUISE, SPA, year, Normal.prop , Moderate.prop, Severe.prop)
 
 
 prop_data_4plot <- reshape2::melt(prop_data_4plot, id.vars = c("year", "SPA", "CRUISE"), value.name = "value")
 
+prop_data_4plot <- prop_data_4plot %>%
+  add_row(year = 2020, SPA = "SPA1A", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA1B", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA3", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA4", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA5", CRUISE = NA, variable = NA, value = NA) %>%
+  add_row(year = 2020, SPA = "SPA6", CRUISE = NA, variable = NA, value = NA)
+
 # plot without pattern
 plot <- ggplot(prop_data_4plot) +
-  geom_bar(data=prop_data_4plot[prop_data_4plot$variable%in%c('Normal.prop' , 'greymeat.prop'),],
-           aes(year, value, fill=factor(variable, levels = c('Normal.prop' , 'greymeat.prop'))), colour="black", stat="identity") +
+  geom_bar(data=prop_data_4plot[prop_data_4plot$variable%in%c('Normal.prop' , 'Moderate.prop', 'Severe.prop'),],
+           aes(year, value, fill=factor(variable, levels = c('Normal.prop' , 'Moderate.prop', 'Severe.prop'))), colour="black", stat="identity") +
   ylab("Proportion of samples with discoloured meats") +
-  #scale_x_continuous(breaks = seq(2018, year+3, 5),
-  # labels = c(1995, 2000, 2005, 2010, 2015, 2020, 2025))+
-  scale_fill_manual(values=c("skyblue3", "grey"), labels=c("Normal", "Discoloured"), name=NULL) +
+  scale_x_continuous(breaks = seq(2018, survey.year, 2))+
+  scale_fill_manual(values=c("skyblue3", "grey", "grey18"), labels=c("Normal - A", "Discoloured - B", "Discoloured - C"), name=NULL) +
   theme_bw()+
   theme(axis.title.x = element_blank(),
         axis.text.x = element_text(margin = margin(t = 4)),
@@ -311,29 +333,42 @@ plot <- ggplot(prop_data_4plot) +
 plot
 
 #save
-ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Disease_Metrics/Proportion_of_Discolouredmeats_by_SPA.png"), plot = plot, scale = 2.5, width = 6, height = 6, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Disease_Metrics/Proportion_of_Discolouredmeats_A_B_C_by_SPA.png"), plot = plot, scale = 2.5, width = 6, height = 6, dpi = 300, units = "cm", limitsize = TRUE)
 
 
-#line plot:
+#line plot - Bs:
 line_plot <- ggplot(proportions_data)+
-  geom_line(aes(x = year, y = greymeat.prop))+
+  geom_line(aes(x = year, y = Moderate.prop, group = SPA))+
   ylim(0, 1.0)+
-  ylab("Proportion of discoloured meats")+
+  ylab("Proportion of discoloured meats - B")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  facet_wrap(~ SPA)
+line_plot
+
+#save
+ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Disease_Metrics/Proportion_of_Discolouredmeats_Bs_by_SPA_lineplot.png"), plot = line_plot, scale = 2.5, width = 6, height = 6, dpi = 300, units = "cm", limitsize = TRUE)
+
+#line plot - Cs:
+line_plot <- ggplot(proportions_data)+
+  geom_line(aes(x = year, y = Severe.prop, group = SPA))+
+  ylim(0, 1.0)+
+  ylab("Proportion of discoloured meats - C")+
   theme_bw()+
   facet_wrap(~ SPA)
 line_plot
 
 #save
-ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Disease_Metrics/Proportion_of_Discolouredmeats_by_SPA_lineplot.png"), plot = line_plot, scale = 2.5, width = 6, height = 6, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/Disease_Metrics/Proportion_of_Discolouredmeats_Cs_by_SPA_lineplot.png"), plot = line_plot, scale = 2.5, width = 6, height = 6, dpi = 300, units = "cm", limitsize = TRUE)
 
 
 #Save as .CSV-----------------------------------------
 #By Tow
-write.csv(greymeat.datw, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Disease_Metrics/Discoloured_Meats_By_Tow.csv"))
+write.csv(greymeat.datw, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Discoloured_Meats_By_Tow.csv"))
 #By SPA
 proportions_data <- proportions_data %>% 
   select(-Normal.prop, -prop.check)
-write.csv(proportions_data, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Disease_metrics/Discoloured_Meats_By_SPA.csv"))
+write.csv(proportions_data, paste0(path.directory,assessmentyear,"/Assessment/Data/SurveyIndices/Discoloured_Meats_By_SPA.csv"))
           
 
 # SPATIAL PLOTS -----------------------------------------------------------
@@ -516,86 +551,86 @@ summary(Surv.sf$prop)
 # ----BoF ALL (BF, SPA3, & SPA6) -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["Gen"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoFall"]]$xlim, ylim = coord_ranges[["BoFall"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BoFAll_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----FULL BAY -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoF"]]$xlim, ylim = coord_ranges[["BoF"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BF_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1A -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["spa1a"]]$xlim, ylim = coord_ranges[["spa1a"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1A Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1A_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1B -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1b"]]) +
   coord_sf(xlim = coord_ranges[["spa1b"]]$xlim, ylim = coord_ranges[["spa1b"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1B Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1B_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA4 and 5 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa4"]]) +
   coord_sf(xlim = coord_ranges[["spa4"]]$xlim, ylim = coord_ranges[["spa4"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA4 Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save  
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA4_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA3 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = list(mgmt_zone_styles[["spa3"]], mgmt_zone_styles[["Gen"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa3"]]) +
   coord_sf(xlim = coord_ranges[["spa3"]]$xlim, ylim = coord_ranges[["spa3"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA3 Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA3_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA6 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,0.115), oob = scales::squish) +#max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Myco \n(proportion)", limits = c(0,1), oob = scales::squish) +#max(preds_idw2$prediction))) + 
   p(mgmt_zone = list(mgmt_zone_styles[["Gen"]], mgmt_zone_styles[["spa6"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa6"]]) +
   coord_sf(xlim = coord_ranges[["spa6"]]$xlim, ylim = coord_ranges[["spa6"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA6 Myco Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA6_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_MycoProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # #Myco per Tow  ------------------------------------------------------
 
@@ -628,7 +663,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BoFAll_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----FULL BAY -----
 bathy + #Plot survey data and format figure.
@@ -640,7 +675,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BF_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1A -----
 bathy + #Plot survey data and format figure.
@@ -652,7 +687,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1A_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1B -----
 bathy + #Plot survey data and format figure.
@@ -664,7 +699,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1B_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA4 and 5 -----
 bathy + #Plot survey data and format figure.
@@ -676,7 +711,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save  
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA4_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA3 -----
 bathy + #Plot survey data and format figure.
@@ -688,7 +723,7 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA3_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA6 -----
 bathy + #Plot survey data and format figure.
@@ -700,12 +735,12 @@ bathy + #Plot survey data and format figure.
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA6_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_Myco_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 
 # -------------- DISCOLOURED SCALLOPS ------------------------------------------------------------
 
-# Proportion of Discoloured scallops ------------------------------------------------------
+# Proportion of Discoloured (Moderate) scallops ------------------------------------------------------
 
 #IDW for whole BoF. Specific changes for each area will be done during plotting
 Surv.sf<-st_as_sf(subset(greymeat.datw,year==survey.year),coords=c("lon","lat"))
@@ -713,7 +748,7 @@ st_crs(Surv.sf) <- 4326
 Surv.sf<-st_transform(Surv.sf,crs = 32620)
 
 #log transforming for better idw() display. Transformed back later for reader comprehension
-Surv.sf$log_prop <- log(Surv.sf$prop) 
+Surv.sf$log_prop <- log(Surv.sf$prop.Moderate) 
 Surv.sf$log_prop[which(Surv.sf$log_prop==-Inf)] <- log(0.0001)
 
 
@@ -729,88 +764,88 @@ summary(Surv.sf$prop)
 # ----BoF ALL (BF, SPA3, & SPA6) -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) + 
   p(mgmt_zone = mgmt_zone_styles[["Gen"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoFall"]]$xlim, ylim = coord_ranges[["BoFall"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BoFAll_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----FULL BAY -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) +
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoF"]]$xlim, ylim = coord_ranges[["BoF"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BF_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1A -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) +
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["spa1a"]]$xlim, ylim = coord_ranges[["spa1a"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1A Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1A_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1B -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1b"]]) +
   coord_sf(xlim = coord_ranges[["spa1b"]]$xlim, ylim = coord_ranges[["spa1b"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1B Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1B_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA4 and 5 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa4"]]) +
   coord_sf(xlim = coord_ranges[["spa4"]]$xlim, ylim = coord_ranges[["spa4"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA4 Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save  
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA4_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA3 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) +
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
   p(mgmt_zone = list(mgmt_zone_styles[["spa3"]], mgmt_zone_styles[["Gen"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa3"]]) +
   coord_sf(xlim = coord_ranges[["spa3"]]$xlim, ylim = coord_ranges[["spa3"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA3 Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA3_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA6 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(proportion)", limits = c(0,0.75), oob = scales::squish) +
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
   p(mgmt_zone = list(mgmt_zone_styles[["Gen"]], mgmt_zone_styles[["spa6"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa6"]]) +
   coord_sf(xlim = coord_ranges[["spa6"]]$xlim, ylim = coord_ranges[["spa6"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA6 Discoloured scallop Proportion"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA6_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_GreyMeat_B_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
-# Number of Discoloured scallops (moderate + severe) per Tow  ------------------------------------------------------
+# Proportion of Discoloured (Severe) scallops ------------------------------------------------------
 
 #IDW for whole BoF. Specific changes for each area will be done during plotting
 Surv.sf<-st_as_sf(subset(greymeat.datw,year==survey.year),coords=c("lon","lat"))
@@ -818,7 +853,113 @@ st_crs(Surv.sf) <- 4326
 Surv.sf<-st_transform(Surv.sf,crs = 32620)
 
 #log transforming for better idw() display. Transformed back later for reader comprehension
-Surv.sf$log_grey <- log(Surv.sf$NUM_GREYMEAT) 
+Surv.sf$log_prop <- log(Surv.sf$prop.Severe) 
+Surv.sf$log_prop[which(Surv.sf$log_prop==-Inf)] <- log(0.0001)
+
+
+#Overlay a grid over the survey area, as it is required to interpolate (smaller cellsize will take more time to run than larger. both here and during interpolation)
+grid <- st_make_grid(idw_sf, cellsize=1000) %>% st_intersection(idw_sf)
+#Doing the inverse distance weighted interpolation
+preds_idw2 <- gstat::idw(log_prop~1,Surv.sf,grid,idp=3)
+
+preds_idw2$prediction <- exp(preds_idw2$var1.pred)
+summary(preds_idw2$prediction)
+summary(Surv.sf$prop)
+
+# ----BoF ALL (BF, SPA3, & SPA6) -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +  #oob = scales::squish
+  p(mgmt_zone = mgmt_zone_styles[["Gen"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["BoFall"]]$xlim, ylim = coord_ranges[["BoFall"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "BoF Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----FULL BAY -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["BoF"]]$xlim, ylim = coord_ranges[["BoF"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "BoF Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_GreyMeatProportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA1A -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["spa1a"]]$xlim, ylim = coord_ranges[["spa1a"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA1A Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA1B -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1b"]]) +
+  coord_sf(xlim = coord_ranges[["spa1b"]]$xlim, ylim = coord_ranges[["spa1b"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA1B Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA4 and 5 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)",limits = c(0,1), oob = scales::squish) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa4"]]) +
+  coord_sf(xlim = coord_ranges[["spa4"]]$xlim, ylim = coord_ranges[["spa4"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA4 Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save  
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA3 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
+  p(mgmt_zone = list(mgmt_zone_styles[["spa3"]], mgmt_zone_styles[["Gen"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa3"]]) +
+  coord_sf(xlim = coord_ranges[["spa3"]]$xlim, ylim = coord_ranges[["spa3"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA3 Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA6 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(proportion)", limits = c(0,1), oob = scales::squish) +
+  p(mgmt_zone = list(mgmt_zone_styles[["Gen"]], mgmt_zone_styles[["spa6"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa6"]]) +
+  coord_sf(xlim = coord_ranges[["spa6"]]$xlim, ylim = coord_ranges[["spa6"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA6 Discoloured scallop Proportion"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_GreyMeat_C_Proportion',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+
+# Number of Discoloured scallops (moderate) per Tow  ------------------------------------------------------
+
+#IDW for whole BoF. Specific changes for each area will be done during plotting
+Surv.sf<-st_as_sf(subset(greymeat.datw,year==survey.year),coords=c("lon","lat"))
+st_crs(Surv.sf) <- 4326
+Surv.sf<-st_transform(Surv.sf,crs = 32620)
+
+#log transforming for better idw() display. Transformed back later for reader comprehension
+Surv.sf$log_grey <- log(Surv.sf$Moderate) 
 Surv.sf$log_grey[which(Surv.sf$log_grey==-Inf)] <- log(0.0001)
 
 
@@ -829,91 +970,197 @@ preds_idw2 <- gstat::idw(log_grey~1,Surv.sf,grid,idp=3)
 
 preds_idw2$prediction <- exp(preds_idw2$var1.pred)
 summary(preds_idw2$prediction)
-summary(Surv.sf$NUM_GREYMEAT)
+summary(Surv.sf$Moderate)
 
 # ----BoF ALL (BF, SPA3, & SPA6) -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["Gen"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoFall"]]$xlim, ylim = coord_ranges[["BoFall"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BoFAll_GreyMeats_per_Tow',survey.year,'_new.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_GreyMeats_B_per_Tow',survey.year,'_new.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----FULL BAY -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["BoF"]]$xlim, ylim = coord_ranges[["BoF"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "BoF Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_BF_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1A -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa1"]]) +
   coord_sf(xlim = coord_ranges[["spa1a"]]$xlim, ylim = coord_ranges[["spa1a"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1A Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1A_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA1B -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1b"]]) +
   coord_sf(xlim = coord_ranges[["spa1b"]]$xlim, ylim = coord_ranges[["spa1b"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA1B Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA1B_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA4 and 5 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa4"]]) +
   coord_sf(xlim = coord_ranges[["spa4"]]$xlim, ylim = coord_ranges[["spa4"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA4 Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save  
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA4_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA3 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = list(mgmt_zone_styles[["spa3"]], mgmt_zone_styles[["Gen"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa3"]]) +
   coord_sf(xlim = coord_ranges[["spa3"]]$xlim, ylim = coord_ranges[["spa3"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA3 Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA3_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 # ----SPA6 -----
 bathy + #Plot survey data and format figure.
   geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
-  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured scallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (B) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
   p(mgmt_zone = list(mgmt_zone_styles[["Gen"]], mgmt_zone_styles[["spa6"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa6"]]) +
   coord_sf(xlim = coord_ranges[["spa6"]]$xlim, ylim = coord_ranges[["spa6"]]$ylim, expand = FALSE) +
   labs(#title = paste(survey.year, "", "SPA6 Discoloured scallop per Tow"), 
     x = "Longitude", y = "Latitude")
 
 #save
-ggsave(filename = paste0(saveplot.dir,'ContPlot_SPA6_GreyMeats_per_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_GreyMeats_per_B_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+
+# Number of Discoloured scallops (Severe) per Tow  ------------------------------------------------------
+
+#IDW for whole BoF. Specific changes for each area will be done during plotting
+Surv.sf<-st_as_sf(subset(greymeat.datw,year==survey.year),coords=c("lon","lat"))
+st_crs(Surv.sf) <- 4326
+Surv.sf<-st_transform(Surv.sf,crs = 32620)
+
+#log transforming for better idw() display. Transformed back later for reader comprehension
+Surv.sf$log_grey <- log(Surv.sf$Severe) 
+Surv.sf$log_grey[which(Surv.sf$log_grey==-Inf)] <- log(0.0001)
+
+
+#Overlay a grid over the survey area, as it is required to interpolate (smaller cellsize will take more time to run than larger. both here and during interpolation)
+grid <- st_make_grid(idw_sf, cellsize=1000) %>% st_intersection(idw_sf)
+#Doing the inverse distance weighted interpolation
+preds_idw2 <- gstat::idw(log_grey~1,Surv.sf,grid,idp=3)
+
+preds_idw2$prediction <- exp(preds_idw2$var1.pred)
+summary(preds_idw2$prediction)
+summary(Surv.sf$Severe)
+
+# ----BoF ALL (BF, SPA3, & SPA6) -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = mgmt_zone_styles[["Gen"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["BoFall"]]$xlim, ylim = coord_ranges[["BoFall"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "BoF Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BoFAll_GreyMeats_C_per_Tow',survey.year,'_new.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----FULL BAY -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["BoF"]]$xlim, ylim = coord_ranges[["BoF"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "BoF Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_BF_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA1A -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa1"]]) +
+  coord_sf(xlim = coord_ranges[["spa1a"]]$xlim, ylim = coord_ranges[["spa1a"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA1A Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1A_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA1B -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa1b"]]) +
+  coord_sf(xlim = coord_ranges[["spa1b"]]$xlim, ylim = coord_ranges[["spa1b"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA1B Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA1B_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA4 and 5 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = mgmt_zone_styles[["BoF"]], Surv.sf, Land, scale_location = "br", arrow_location = "br", legend_position = legend_positions[["spa4"]]) +
+  coord_sf(xlim = coord_ranges[["spa4"]]$xlim, ylim = coord_ranges[["spa4"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA4 Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save  
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA4_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA3 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = list(mgmt_zone_styles[["spa3"]], mgmt_zone_styles[["Gen"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa3"]]) +
+  coord_sf(xlim = coord_ranges[["spa3"]]$xlim, ylim = coord_ranges[["spa3"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA3 Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA3_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
+
+# ----SPA6 -----
+bathy + #Plot survey data and format figure.
+  geom_sf(data = preds_idw2, aes(fill = prediction),  colour = NA) + 
+  scale_fill_viridis_c(option = "H",  trans = "sqrt", name = "Discoloured (C) \nscallop \n(N/Tow)", limits = c(0,max(preds_idw2$prediction))) + 
+  p(mgmt_zone = list(mgmt_zone_styles[["Gen"]], mgmt_zone_styles[["spa6"]]), Surv.sf, Land, scale_location = "tl", arrow_location = "tl", legend_position = legend_positions[["spa6"]]) +
+  coord_sf(xlim = coord_ranges[["spa6"]]$xlim, ylim = coord_ranges[["spa6"]]$ylim, expand = FALSE) +
+  labs(#title = paste(survey.year, "", "SPA6 Discoloured scallop per Tow"), 
+    x = "Longitude", y = "Latitude")
+
+#save
+ggsave(filename = paste0(saveplot.dir,'Disease_Metrics/ContPlot_SPA6_GreyMeats_per_C_Tow',survey.year,'.png'), plot = last_plot(), scale = 2.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
 
 #### |------------------------- end of English script -----------------------------|####
 

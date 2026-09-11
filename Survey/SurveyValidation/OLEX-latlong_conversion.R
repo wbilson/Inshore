@@ -78,7 +78,8 @@ SPA6B <- rmapshaper::ms_erase(SPA6B,SPA6D)%>%
 #plot(SPA6B)
 
 SPA_BoF <- rbind(SPA1A, SPA1B, SPA2, SPA3, SPA4, SPA5, SPA6A, SPA6B, SPA6C, SPA6D) %>% 
-  st_transform(crs = 4326)
+  st_transform(crs = 4326) %>% 
+  st_make_valid()
 
 rm(SPA1A, SPA1B, SPA2, SPA3, SPA4, SPA5, SPA6A, SPA6B, SPA6C, SPA6D) #declutter environment
 
@@ -94,8 +95,6 @@ unzip(zipfile=temp, exdir=temp2)
 
 # Now read in the strata shapefile
 strata <- st_read(paste0(temp2, "/PolygonSCSTRATAINFO_rm46-26-57.shp"))
-
-
 ###########################################################################################################
 
 #Import olex data:
@@ -108,7 +107,8 @@ strata <- st_read(paste0(temp2, "/PolygonSCSTRATAINFO_rm46-26-57.shp"))
 #Garnstopp - stop
 #Brunsirkel - brown circle (points along trackline?)
 
-zz <- read.csv(gzfile('Y:/Inshore/Survey/OLEX tow tracks/2023/20230711.gz'))
+zz <- read_csv("Y:/Inshore/Survey/Olex/OLEX tow tracks/2026/20260627.gz", locale = locale(encoding = "latin1"))
+names(zz) <- "Ferdig.forenklet"
 #zz <- read.csv(gzfile('Y:/Inshore/Survey/OLEX tow tracks/2023/20230711.gz'))
 
 str(zz)
@@ -129,12 +129,13 @@ zz <- zz %>% filter(Ferdig.forenklet_4 %in% c("Garnstart", "Garnstopp", "Gr?nnra
   mutate(Latitude = as.numeric(Ferdig.forenklet_1)/60) %>% 
   mutate(Longitude = as.numeric(Ferdig.forenklet_2)/60)
 
+table(zz$Ferdig.forenklet_4) #missing one stop record in BI2026
 View(zz)
 
 #Select the row where the track data starts (i.e. the first "Garnstart"). Check for "Gr?nnramme".
-zz <- zz[120:nrow(zz)] #[Row# where "Garnstart" first occurs: to end of data]  #Most likely its however many stations there are, but could be more if observations were added.
+#zz <- zz[1:nrow(zz)] #[Row# where "Garnstart" first occurs: to end of data]  #Most likely its however many stations there are, but could be more if observations were added.
 
-#Convert decimal degrees to decimal minutes seconds.
+#Convert decimal degrees to degrees minutes.
 zz$Latitude.deg <- convert.dd.dddd(zz$Latitude, format = 'deg.min')
 zz$Longitude.deg <- convert.dd.dddd(zz$Longitude, format = 'deg.min')*-1
 
@@ -155,11 +156,33 @@ zz.end <- zz %>% filter(Ferdig.forenklet_4 %in% c("Garnstopp")) %>% #"Gr?nnramme
 zz.end$End_lat <- trunc(zz.end$End_lat*10^3)/10^3
 zz.end$End_long <- trunc(zz.end$End_long*10^3)/10^3
 
+######################################
+#EDITS TO BI2026:
+#rm first row
+zz.start <- zz.start[-1, ]
+zz.end <- zz.end[-1, ]
+
+#Tow 7 was split into two.. remove second start and first end associated with tow 7 (checked logbook to confirm)
+zz.start <- zz.start[-8, ]
+zz.end <- zz.end[-7, ]
+
+#Find the garnstart where there is no stop record
+which(zz.start$Start_lat == 4411.055)# row/tow 60
+#need to add end coords for tow 60 - from logbook
+#End_long == 6631.244, End_long_dec == -66.5207333333
+#End_lat == 4410.705, End_lat_dec == 44.1784166667
+zz.end <- zz.end %>% 
+  add_row(End_lat = 4410.705, End_long = 6631.244, End_lat_dec = 44.17842, End_long_dec = -66.52073, .before = 60)
+
+#End of Edits to BI2026
+#######################################
+
 coords <- cbind(zz.start, zz.end) %>% 
   mutate(ID = seq(1,nrow(zz.start),1))  #NOTE - ID IS NOT TOW NUMBER (although it could lineup). it is only used to compare records when matching strata #s and SPAs.
 
 # Match Strata ID and SPA # to lat and long data (use start lat long)
-coords.sf <- st_as_sf(coords, coords = c("Start_long_dec", "Start_lat_dec"), crs = 4326)
+coords.sf <- st_as_sf(coords, coords = c("Start_long_dec", "Start_lat_dec"), crs = 4326) %>%
+  mutate(ID = as.factor(ID))
 plot(coords.sf)
 
 coords.sf.end <- st_as_sf(coords, coords = c("End_long_dec", "End_lat_dec"), crs = 4326)
@@ -167,35 +190,39 @@ coords.sf.end <- st_as_sf(coords, coords = c("End_long_dec", "End_lat_dec"), crs
 
 #BOF - Dont run for SFA29W
 strata.match <- st_intersection(strata, coords.sf)
-strata.match <- strata.match %>% dplyr::select(STRATA_ID, ID)
+strata.match <- strata.match %>% 
+  dplyr::select(STRATA_ID, ID) %>%
+  mutate(ID = as.factor(ID))
 #BOF SPA - Dont run for SFA29W
 spa.match <- st_intersection(SPA_BoF , coords.sf)
-spa.match <- spa.match %>% dplyr::select(ET_ID, ID)
+spa.match <- spa.match %>% dplyr::select(ET_ID, ID) %>%
+  mutate(ID = as.factor(ID))
 
 #BOF - All points should have strata, and spa matches. If there are discrepancies - check 
+#may have to run sf::sf_use_s2(FALSE)
 coords.sf <- coords.sf %>% 
   st_join(spa.match, by = "ID", suffix = c("", ".y")) %>% 
-  st_join(strata.match,by = "ID", suffix = c("", ".y")) %>% 
+  st_join(strata.match, by = "ID", suffix = c("", ".y")) %>% 
   dplyr::select(ID, Start_lat, Start_long, End_lat, End_long, ET_ID, STRATA_ID)
 
 #SFA29W
-strata.match <- st_intersection(SFA29 , coords.sf)
-strata.match <- strata.match %>% dplyr::select(ET_ID, ID)
+#strata.match <- st_intersection(SFA29 , coords.sf)
+#strata.match <- strata.match %>% dplyr::select(ET_ID, ID)
 
 #SFA29W - All points should have strata, and spa matches. If there are discrepancies - check 
-coords.sf <- coords.sf %>% 
-  st_join(strata.match,by = "ID", suffix = c("", ".y")) %>% 
-  dplyr::select(ID, Start_lat, Start_long, End_lat, End_long, ET_ID)
+#coords.sf <- coords.sf %>% 
+#  st_join(strata.match,by = "ID", suffix = c("", ".y")) %>% 
+#  dplyr::select(ID, Start_lat, Start_long, End_lat, End_long, ET_ID)
 
 
 ##########################################################
 #plot to check
 
 mapview::mapview(coords.sf) + #%>% filter(ID %in% c(96,98)) #option to filter out specific points
-  mapview::mapview(SFA29)
+  #mapview::mapview(SFA29)
   #mapview::mapview(coords.sf.end) +
   #mapview::mapview(strata) +
-  #mapview::mapview(SPA_BoF)+
+  mapview::mapview(SPA_BoF)#+
   #mapview::mapview(VMS_out, col.regions=list("red"))+
   #mapview::mapview(VMS_in, col.regions=list("red"))
 
@@ -204,7 +231,7 @@ mapview::mapview(coords.sf) + #%>% filter(ID %in% c(96,98)) #option to filter ou
 coords.sf <- coords.sf%>% 
   st_drop_geometry()
 
-write.csv(coords.sf, "Y:/Inshore/Survey/OLEX tow tracks/Olex-latlong_conversion/GM2023_coords_check.csv")
+write.csv(coords.sf, "Y:/Inshore/Survey/Olex/OLEX tow tracks/Olex-latlong_conversion/BI2026_coords_check.csv")
 
 ###########################################################################################################
 

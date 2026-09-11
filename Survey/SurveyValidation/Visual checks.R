@@ -33,14 +33,14 @@ for(fun in funcs)
 
 #define
 direct <- "Y:/Inshore/Survey/"
-year <- 2025 #For years prior to 2023, the directory name is different! Will need to adjust if running for previous years - year/data entry templates and examples/
-CRUISE <- "GM" # "BI", BF", "GM", "SFA29"
+year <- 2026 #For years prior to 2023, the directory name is different! Will need to adjust if running for previous years - year/data entry templates and examples/
+CRUISE <- "BI" # "BI", BF", "GM", "SFA29"
 #uid = Sys.getenv("un.raperj") #ptran username
 #pwd = Sys.getenv("pw.raperj") #ptran password
 #uid <- un.sameotoj
 #pwd <- pw.sameotoj
-uid <- un.englishg
-pwd <- pw.englishg
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
 
 ###Read in shapefiles if needed
@@ -82,18 +82,14 @@ SFA29 <- st_read(paste0(temp2, "/SFA29_subareas_utm19N.shp")) %>% mutate(ID = se
 
 # tow_CONVERTED.csv ----------------------------------------------------------------
 
-num.tows <- read.csv(paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"/",CRUISE,year,"_tow_CONVERTED.csv"))
+num.tows <- read.csv(paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"/",CRUISE,year,"tow_CONVERTED.csv"))
 
 #Check for missing tow lengths:
 table(is.na(num.tows$Tow_len))
 
 #check for NAs in other columns.
+#check that ranges of values make sense (min, maxs etc)
 summary(num.tows)
-
-##Bottom code missing for GM2024 tow 134
-is.na(num.tows$Bottom_code)
-
-head(num.tows)
 
 ### Check number of gangs, line and unlined - num_lined is number of lined gangs on gear, num_unlined is number of unlined gangs on gear; since switch to Miracle gear in 2012 this should be always be num_lined = 2, and num_unlined = 7 
 table(num.tows$num_lined)
@@ -140,10 +136,10 @@ ggplot() + geom_text(data=mwsh[mwsh$Tow>1 & mwsh$Tow<50,]
 
 #Plot individual tows (labels are sample numbers)
 
-ggplot() + geom_text(data=mwsh[mwsh$Tow==5,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
-ggplot() + geom_text(data=mwsh[mwsh$Tow==29,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
+ggplot() + geom_text(data=mwsh[mwsh$Tow==25,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
+ggplot() + geom_text(data=mwsh[mwsh$Tow==35,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 
-ggplot() + geom_text(data=mwsh[mwsh$Tow==16,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
+ggplot() + geom_text(data=mwsh[mwsh$Tow==27,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 ggplot() + geom_text(data=mwsh[mwsh$Tow==21,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 
 
@@ -153,7 +149,7 @@ ggplot() + geom_text(data=mwsh[mwsh$Tow>50 & mwsh$Tow<100,]
 
 #Plot individual tows (labels are sample numbers)
 
-ggplot() + geom_text(data=mwsh[mwsh$Tow==83,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
+ggplot() + geom_text(data=mwsh[mwsh$Tow==90,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 ggplot() + geom_text(data=mwsh[mwsh$Tow==69,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 
 #Plot fewer tows to visualize better - Tows 100 max tow number for cruise
@@ -172,7 +168,7 @@ ggplot() + geom_text(data=mwsh[mwsh$Tow>100 & max(mwsh$Tow),]
                      , aes(Height, Weight, colour=as.factor(Tow), label=as.factor(Tow))) 
 
 #Plot individual tows (labels are sample numbers)
-ggplot() + geom_text(data=mwsh[mwsh$Tow==207,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
+ggplot() + geom_text(data=mwsh[mwsh$Tow==122,], aes(Height, Weight, colour=as.factor(Tow), label=Num))
 
 
 # bycatch.csv ----------------------------------------------------------------
@@ -213,8 +209,8 @@ bycatch[bycatch$Species_code == 2550 & bycatch$Sex == 0,]
 #check by little/winter small skate not sexed 
 bycatch[bycatch$Species_code == 1191 & bycatch$Sex == 0,]
 
-#check why ocean pout sexed 
-bycatch[bycatch$Species_code == 640 & bycatch$Sex != 0,]
+#check why redfish sexed 
+bycatch[bycatch$Species_code == 20 & bycatch$Sex != 0,]
 
 #check why windowpane sexed 
 bycatch[bycatch$Species_code == 143 & bycatch$Sex != 0,]
@@ -245,6 +241,10 @@ bycatch[bycatch$Species_code == 6721,]
 #Note - horse mussels are not entered in the bycatch.csv. These are entered in a separate file (so there should *not* be species code 4332 in this file)
 
 ggplot() + geom_point(data=bycatch, aes(as.factor(Sex), Measurement)) + facet_wrap(~Species_code, scales="free")
+bycatch[which(bycatch$Species_code%in% c(12)),]
+bycatch[which(bycatch$Species_code%in% c(41)),]
+bycatch[which(bycatch$Species_code%in% c(122)),]
+
 #bycatch[which(bycatch$Species_code==1191 & bycatch$Tow_num==53 & bycatch$Measurement>100),]$Measurement <-24
 #bycatch[which(bycatch$Species_code==1191 & bycatch$Measurement==30.5),]$Measurement <- 30
 #bycatch[which(bycatch$Species_code==1191 & bycatch$Measurement>30 & bycatch$Tow_num==244),]$Measurement <- 26
@@ -271,31 +271,13 @@ dhf.dup.check <- rbind(dhf.dup.check, output)
 dhf.dup.check |> filter(wx == TRUE) |> dplyr::select(TOW)
 
 #Look at specific Tow number and cross reference with data sheet.
-View(dhf.dup.check |> filter(TOW == 114)) #enter tow
-
-## Check datasheet for tow 128 GM 2024 
+View(dhf.dup.check |> filter(TOW == 39)) #enter tow
 
 #Re-arrange data for plotting:
 
 ### REPEAT THIS SECTION FOR LIVE AND THEN FOR DEAD #######
 
 dhf <-  read.csv(paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"/",CRUISE,year,"_dhf.csv"))
-
-#Check for duplicated rows from columns X0 and X95, grouped by tow
-dhf.sh.bins <- dhf |> dplyr::select(TOW,X0:X95)
-#Remove rows that contain all NAs for the shell height bins (excluding TOW column).
-dhf.sh.bins <- filter(dhf.sh.bins, rowSums(is.na(dhf.sh.bins[,-1])) != ncol(dhf.sh.bins[,-1]))
-
-#Checks for duplicate rows within a Tow.
-dhf.dup.check <- data.frame()
-for(i in unique(dhf.sh.bins$TOW)){
-output <- dhf.sh.bins |> filter(TOW == i)
-output$wx <- duplicated(output, fromLast = TRUE)
-dhf.dup.check <- rbind(dhf.dup.check, output)
-}
-###Check these tows for duplicate entries### - These may or may not be errors (e.g. could just have 1s in the same column and NAs in the rest)
-dhf.dup.check |> filter(wx == TRUE) |> dplyr::select(TOW)
-
 
 #Re-arrange data for plotting:
 dhf <- reshape2::melt(dhf, id.vars=c("CRUISE", "TOW", "GEAR", "DEPTH", "c"))
@@ -311,7 +293,6 @@ dhf <- dhf |> filter(c %in% c(2,3)) # c(0,1) for Live. and c(2,3)) for Dead
 
 #Plot to look for outliers - will need to adjust for survey tow numbers. Plots frequency (y axis), bin (x axis), by Tow and Gear (unlined/lined)
 dhf1 <- dhf[dhf$TOW>0 & dhf$TOW < 15,]
-
 ggplot(dhf1, aes(as.numeric(bin), value)) + geom_bar(fill = "aquamarine3", stat = "identity") + facet_grid(GEAR~TOW, scales="free")
 
 
@@ -382,8 +363,6 @@ ggplot(dhf21, aes(as.numeric(bin), value)) + geom_bar(fill = "aquamarine3", stat
 
 dhf22 <- dhf[dhf$TOW>331 & dhf$TOW <= 345,]
 ggplot(dhf22, aes(as.numeric(bin), value)) + geom_bar(fill = "aquamarine3", stat = "identity") + facet_grid(GEAR~TOW, scales="free")
-
-
 
 
 ######## REPEAT ABOVE FOR DEAD ######
@@ -620,7 +599,7 @@ which(end_long_less6500$End_long == min(end_long_less6500$End_long)) #Which row 
  check.tows.sf$flag <- ifelse(check.tows.sf$diff > 100, "check", 
                               ifelse(check.tows.sf$diff < -100, "check", "ok"))
  #Save for record:
- st_write(check.tows.sf |> st_drop_geometry(), paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"/",CRUISE,year,"_flagged_tows_new.csv"))
+ #st_write(check.tows.sf |> st_drop_geometry(), paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"/",CRUISE,year,"_flagged_tows_new.csv"))
  
  #Check these tows!
  check.tows.sf |> filter(flag == "check")
@@ -661,19 +640,10 @@ ggsave(filename = paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"
  mapview::mapview(check.tows.sf |> filter(Oracle.tow.. == 36), zcol = "Oracle.tow..")+
    mapview::mapview(Strata.sf)
  
- ggplot()+
-   geom_sf(data = Strata.sf) +
-   geom_sf(data = check.tows.sf |> filter(flag == "check"), aes(colour = Oracle.tow..))+
-   geom_sf_text(data = check.tows.sf |> filter(flag == "check"), aes(label = Oracle.tow..),
-                nudge_x=0.02, nudge_y = 0) #adjust nudge if needed to view tow line properly
- 
- 
  plot.tows <- check.tows.sf |> filter(Oracle.tow..%in% c(81:91))
  mapview::mapview(plot.tows, zcol = "Oracle.tow..")+
    mapview::mapview(BF.strata)
  
- 
-
  #For interactive map use Mapview to inspect:
  mapview::mapview(check.tows.sf |> filter(flag == "check"), zcol = "Oracle.tow..")+
    mapview::mapview(Strata.sf)
@@ -682,7 +652,6 @@ ggsave(filename = paste0("Y:/Inshore/Survey/", year,"/DataEntry/",CRUISE, year,"
 
  if(CRUISE != "SFA29"){
    
-
 repeatslastyear <- read.csv(paste0(direct, as.numeric(year)-1, "/DataEntry/",CRUISE,year-1,"/",CRUISE,year-1,"tow_CONVERTED.csv"))
 
 #repeatslastyear <- read.csv(paste0(direct, as.numeric(year)-1, "/data entry templates and examples/",CRUISE,year-1,"/",CRUISE,year-1,"tow_CONVERTED.csv"))
@@ -764,10 +733,10 @@ check.strata$flag <- ifelse(check.strata$ET_ID != check.strata$Strata_id, "check
    check.strata <- st_intersection(BF.strata,check.strata)
    
 
-   check.strata$flag <- ifelse(check.strata$STRATA_ID != check.strata$Strata_id, "check","ok")
+   check.strata$flag <- ifelse(check.strata$ET_ID != check.strata$Strata_id, "check","ok")
 
-   check.strata$flag <- ifelse(check.strata$STRATA_ID != check.strata$Strata_id, "check", 
-                               ifelse(check.strata$STRATA_ID == check.strata$Strata_id, "ok"))
+   check.strata$flag <- ifelse(check.strata$ET_ID != check.strata$Strata_id, "check", 
+                               ifelse(check.strata$ET_ID == check.strata$Strata_id, "ok"))
 
 }
   
