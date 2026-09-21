@@ -85,6 +85,7 @@ library(SSModeljags)
 library(openxlsx)
 library(compareDF)
 library(tidyverse)
+#remotes::install_github('jsameoto/rosettafish')
 library(rosettafish)
 
 #### Import Mar-scal functions 
