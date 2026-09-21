@@ -41,7 +41,7 @@ SSModel.plot.median <- function (x, type = "Model.est", cred.lim = 0.05, ref.pts
           proj.obj = NULL, french=FALSE, ...) 
 {
   
-  require(rosettafish) || stop("Install the rosettafish package please: remotes::install_github('freyakeyser/rosettafish')")
+  require(rosettafish) || stop("Install the rosettafish package please: remotes::install_github('mar-scal/rosetta_shell')")
   require(RCurl) || stop("Install the RCurl package please: install.packages('RCurl')")
   rosetta_terms_SABHU <- read.csv("https://raw.githubusercontent.com/mar-scal/rosetta_shell/master/terms.csv", fileEncoding = "UTF-8")
   

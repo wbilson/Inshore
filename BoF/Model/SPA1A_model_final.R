@@ -41,7 +41,23 @@
 # as great an extent as possible, I believe you will only need to update catch.next.year in the script.
 
 ###  J.Sameoto June 2020  Modified for running 2019 model run in Summer 2020 and for new folder structure of BOF 
-### J.Sameoto June 2021 modified to define LRP, USR up front, to calculate probabiltiy > USR and > LRP for current year commercial biomass, and save out select result and diagnostics to be used by future Rmd CSAS Update file, make model file name generic so don't update every year,  
+### J.Sameoto June 2021 modified to define LRP, USR up front, to calculate probabiltiy > USR and > LRP for current year commercial biomass, and save out select result and diagnostics to be used by future Rmd CSAS Update file, make model file name generic so don't update every year, 
+
+
+###NEW!##
+# As of September 2026 - Running the model through WINBUGS no longer works. To run the model, JAGS (4.3.2) will need to be installed. Note. JAGS 5.0 does not currently work with the SSModeljags package.
+
+# -Go to https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.2.exe/download and download. Install using default file path (e.g. C:\Users\USERNAME\AppData\Local\Programs). 
+
+#- Once installed, you may have to point R to the file path e.g. Sys.setenv(JAGS_HOME = "C:/Users/USERNAME/AppData/Local/Programs/JAGS/JAGS-4.3.0"). 
+#- Install the package saved here: Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz) 
+#install.packages("Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz", repos = NULL, type = "source")
+
+#- and load library SSModeljags
+
+#- Note: In the model function, niter, nburnins, nchains etc. have to be hard coded.
+
+##In addition, since Inshore moved to operating off of the SKY NAS, loading .Rdata files (i.e. the previous year's models) has been challenging. An error "ReadItem: unknown type 0, perhaps written by later version of R" sometimes appears, which indicates the files are corrupted, however, this is not the case. Try to run again, and if the error persisits, the files will have to be read in individually. Check in the environment to see which ones loaded and where it stopped. Often most will load, so you won't have to load all of them manually.
 
 rm(list=ls(all=T))
 options(stringsAsFactors = FALSE)
@@ -64,7 +80,8 @@ catch.next.year <- 83 #1661.702*0.05 #Interims were not decided at the time of t
 
 #PACKAGES:
 #required packages
-library(SSModel) #v 1.0-3
+#library(SSModel) #v 1.0-3
+library(SSModeljags)
 library(openxlsx)
 library(compareDF)
 library(tidyverse)
@@ -113,7 +130,7 @@ CreateExcelModelFile(direct = direct,
 
 # Let's be consistent with our MCMC year over year unless there is a need to change it...
 niter = 250000 # default = 100000
-nchains = 3    # default =3
+nchains = 5    # default =3  #Had to change to get > 400 min.neff
 nburnin = 50000  # default = 50000
 nthin = 10       # default = 10
 
@@ -158,8 +175,13 @@ SPA1A.inits <- function(NY)
 
 
 # ---- Run the model ----
+
 Spa1A.model <- SSModel(SPA1A.dat,BoFSPA4.priors,SPA1A.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
-                    nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T)
+                       nchains=5,niter=250000,nburnin=50000,nthin=10) #,debug=T, Have to hardcode these parameters, for parallel processing to work.
+#increased nchains from 3 to 4.
+
+#Spa1A.model <- SSModel(SPA1A.dat,BoFSPA4.priors,SPA1A.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
+                   # nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T)
 
 #need to save model as year defined object for prediction evaluations 
 assign(paste0("Spa1A.", max(yrs)), Spa1A.model)   
@@ -171,7 +193,7 @@ save(list = paste0("Spa1A.", max(yrs)), file=paste0(direct,"/",assessmentyear, "
 #load(paste0(direct,"/",assessmentyear, "/Assessment/Data/Model/SPA",area,"/SPA1A_Model_",max(yrs),".RData"))
 
 #This is just to save you from wasting time changing the names of a bunch of lines below...
-#mod.res <- Spa1A.2025
+#mod.res <- Spa1A.2026
 mod.res <- Spa1A.model
 
 
@@ -334,6 +356,9 @@ dev.off()
 # --- Prediction Evaluations - Condition Assumption ---- 
 # Load in the old model results for the prediction evaluation, this will now automatically load all the
 # necessary data up to the year you want (whatever you specified in (yrs)
+
+## WARNING ## : Since switching over to SKY, loading in Rdata files has been an issue. The lines below do not always work, some files are loaded and some are not. You may have to manually load them.
+
 pred.yr <- 2009:max(yrs) # Neeed to set this here as these loads will all overwrite the maximum year neeeded below...
 num.pred.years <- length(pred.yr)
 t.yrs <- yrs
@@ -422,7 +447,7 @@ write.csv(pred.1yr.boxplot$B.next, paste0(direct,"/",assessmentyear,"/Assessment
 
 # --- Decision Tables ----
 #Finally here we have the decision table.  This plots the decision table for all catch rates between 0 and 500 increments of 10 tonnes of catch (seq(0,500,10)).
-decision <- predict(mod.res, Catch=c(seq(100,300,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
+decision <- predict(mod.res, Catch=c(seq(0,275,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
 decision.table <- SSModel_predict_summary_median(decision, LRP=LRP, USR=USR, RRP=0.15)
 decision.table
 
@@ -434,7 +459,7 @@ write.csv(decision.table, paste0(direct,"/",assessmentyear,"/Assessment/Data/Mod
 #output from  summary stats_1A_2019.csv is what is needed to stay as a R object so it can be sourced for Rmarkdown 
 # Be sure to set assessmentyear and surveyyear and RDatafile appropriately !!
 #stats.output <- BoF.model.stats(area = "1A", assessmentyear=2024, surveyyear=2024, direct = "Y:/Inshore/BoF/", RDatafile = "SPA1A_Model_2024")
-stats.output <- BoF.model.stats(area = "1A", assessmentyear=assessmentyear, surveyyear=surveyyear, direct = "Y:/Inshore/BoF/", RDatafile = paste0("SPA1A_Model_",surveyyear))
+stats.output <- BoF.model.stats(area = "1A", assessmentyear=assessmentyear, surveyyear=surveyyear, direct = "Y:/Inshore/Assessment/BoF/", RDatafile = paste0("SPA1A_Model_",surveyyear))
 
 
 

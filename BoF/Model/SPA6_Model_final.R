@@ -46,6 +46,22 @@
 ## Remember - model is only run for the Inside VMS area and therefore the Catch for the model is the catch associated with the inside VMS area - not the full SPA 6 catch that you'd see in the landings figures 
 ### J.Sameoto June 2021 modified to save out select result and diagnostics to be used by future Rmd CSAS Update file, make model file name generic so don't update every year,  
 
+###NEW!##
+# As of September 2026 - Running the model through WINBUGS no longer works. To run the model, JAGS (4.3.2) will need to be installed. Note. JAGS 5.0 does not currently work with the SSModeljags package.
+
+# -Go to https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.2.exe/download and download. Install using default file path (e.g. C:\Users\USERNAME\AppData\Local\Programs). 
+
+#- Once installed, you may have to point R to the file path e.g. Sys.setenv(JAGS_HOME = "C:/Users/USERNAME/AppData/Local/Programs/JAGS/JAGS-4.3.0"). 
+#- Install the package saved here: Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz) 
+#install.packages("Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz", repos = NULL, type = "source")
+
+#- and load library SSModeljags
+
+#- Note: In the model function, niter, nburnins, nchains etc. have to be hard coded.
+
+##In addition, since Inshore moved to operating off of the SKY NAS, loading .Rdata files (i.e. the previous year's models) has been challenging. An error "ReadItem: unknown type 0, perhaps written by later version of R" sometimes appears, which indicates the files are corrupted, however, this is not the case. Try to run again, and if the error persisits, the files will have to be read in individually. Check in the environment to see which ones loaded and where it stopped. Often most will load, so you won't have to load all of them manually.
+
+
 #####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES
 #in model formulation use: for BoF: have biomass remove catch then grow up and kill off; in 29: have survey, grow up animals, kill off animals due to natural mortality, THEN remove catch
 #####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES#####NOTES
@@ -56,13 +72,13 @@ options(stringsAsFactors = FALSE)
 #DEFINE:
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-assessmentyear <- 2025 #year in which you are conducting the assessment 
-surveyyear <- 2025 #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
+assessmentyear <- 2026 #year in which you are conducting the assessment 
+surveyyear <- 2026 #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
 area <- 6  #this would be the SPA, for entries options are to use: 1A, 1B, 3, 4, or 6  
 
 
 # Set the value for catch next year, assume same catch removals as current year, this is used in SSModel.plot.median() after the model runs; note no interim used for SPA 6 fishery 
-catch.next.year <- 173 #0.55*314 = 172.7
+catch.next.year <- 71 #0.55*129.29 = 
 
 #reference points - **NEW BIOMASS ref pts for SPA 6**
 #Set reference points 
@@ -71,7 +87,8 @@ LRP <- 236
 
 
 #required packages
-library(SSModel) #v 1.0-5
+#library(SSModel) #v 1.0-5
+library(SSModeljags)
 #library(R2WinBUGS)
 library(openxlsx)
 library(lubridate)
@@ -126,8 +143,8 @@ SPA6.landings <- read.xlsx(paste0(direct, "/", assessmentyear, "/Assessment/Data
 # 9) when satisfied with the table, re-name it to remove the date. E.g. SPAxx_ModelData_R.xlsx 
 
 CreateExcelModelFile(direct = direct, 
-                     assessmentyear=2025, surveyyear = 2025, 
-                     area = 6, LastYearsModelRData = "SPA6_Model_2024", 
+                     assessmentyear=2026, surveyyear = 2026, 
+                     area = 6, LastYearsModelRData = "SPA6_Model_2025", 
                      savefile = T)
 
 # for testing only (using FK private repo): 
@@ -140,7 +157,7 @@ CreateExcelModelFile(direct = direct,
 
 # Let's be consistent with our MCMC!
 niter = 400000
-nchains = 3
+nchains = 4 #3
 nburnin = 200000
 nthin = 10
 
@@ -151,7 +168,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 
 # Read in the data...  Note that in 2018 SPA6 is the one area which wasn't updated with the new _R Data file system as some work remains to get 
 # all the data organized
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear, "/Assessment/Data/Model/SPA",area,"/SPA6_ModelData_R_2025-10-16.xlsx"),sheet = "AlignedForModel",
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear, "/Assessment/Data/Model/SPA",area,"/SPA6_ModelData_R_2026-09-16.xlsx"),sheet = "AlignedForModel",
                      cols=1:13)
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
@@ -181,8 +198,13 @@ BoFSPA6.priors <- BoFSPA4.priors
 #BoFSPA6.priors$kappa.tau.b <- 2.5
 
 # ---- Run the model ----
+
+#Test with RJAGS
 Spa6.model <- SSModel(SPA6.dat,BoFSPA6.priors,SPA6.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
-                     nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T) #increased inter and used higher thin to combat autocorrelation (as evidenced by low n.eff)
+                      nchains=4,niter=400000,nburnin=200000,nthin=10) #,debug=T
+
+#Spa6.model <- SSModel(SPA6.dat,BoFSPA6.priors,SPA6.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
+                     #nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T) #increased inter and used higher thin to combat autocorrelation (as evidenced by low n.eff)
 
 #need to save model as year defined object for prediction evaluations 
 assign(paste0("Spa6.", max(yrs)), Spa6.model)   
@@ -358,6 +380,9 @@ dev.off()
 # ---- PREDICTION EVALUTATION - Condition Assumption ---- 
 # Load in the old model results for the prediction evaluation, this will now automatically load all the
 # necessary data up to the year you want (whatever you specified in (yrs)
+
+## WARNING ## : Since switching over to SKY, loading in Rdata files has been an issue. The lines below do not always work, some files are loaded and some are not. You may have to manually load them.
+
 pred.yr <- 2011:max(yrs) # Neeed to set this here as these loads will all overwrite the maximum year needed below...
 num.pred.years <- length(pred.yr)
 t.yrs <- yrs
@@ -435,7 +460,7 @@ write.csv(pred.1yr.boxplot$B.next, paste0(direct,"/",assessmentyear,"/Assessment
 
 
 #decision table with reference points 
-decision  <- predict (mod.res, Catch=c(seq(0, 135, 15)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY]) 
+decision  <- predict (mod.res, Catch=c(seq(0, 135, 9)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY]) 
 decision.table <- SSModel_predict_summary_median(decision, LRP=LRP, USR=USR, RRP=0.18)
 decision.table
 

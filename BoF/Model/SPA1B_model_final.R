@@ -49,6 +49,21 @@
 
 ### to do - edit SSModel.plot.median;  fix(SSModel.plot.median) line 242 update to y=ref.pts[1]*1.5  (from y=ref.pts[1]*1.1)
 
+###NEW!##
+# As of September 2026 - Running the model through WINBUGS no longer works. To run the model, JAGS (4.3.2) will need to be installed. Note. JAGS 5.0 does not currently work with the SSModeljags package.
+
+# -Go to https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Windows/JAGS-4.3.2.exe/download and download. Install using default file path (e.g. C:\Users\USERNAME\AppData\Local\Programs). 
+
+#- Once installed, you may have to point R to the file path e.g. Sys.setenv(JAGS_HOME = "C:/Users/USERNAME/AppData/Local/Programs/JAGS/JAGS-4.3.0"). 
+#- Install the package saved here: Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz) 
+#install.packages("Y:/Inshore/Admin/software/R4.0/SSModeljags_1.0-0.tar.gz", repos = NULL, type = "source")
+
+#- and load library SSModeljags
+
+#- Note: In the model function, niter, nburnins, nchains etc. have to be hard coded.
+
+##In addition, since Inshore moved to operating off of the SKY NAS, loading .Rdata files (i.e. the previous year's models) has been challenging. An error "ReadItem: unknown type 0, perhaps written by later version of R" sometimes appears, which indicates the files are corrupted, however, this is not the case. Try to run again, and if the error persisits, the files will have to be read in individually. Check in the environment to see which ones loaded and where it stopped. Often most will load, so you won't have to load all of them manually.
+
 rm(list=ls(all=T))
 options(stringsAsFactors = FALSE)
 
@@ -65,10 +80,12 @@ USR <- 1800
 
 # Set the value for catch next year, this is used in SSModel.plot.median() after the model runs 
 # This value should be the interim TAC in the area.
+
 catch.next.year <- 104 #2076.801*0.05 = 103.8  Interims were not decided at the time of test running the model so we are using 5% of estimated biomass from 1 year projections of 2025 model which assumes growth (predicted g and gr) and m (5 year mean) ) #SPA1B projected median biomass for 2026 is 2076.801
  
 #required packages
-library(SSModel)#v 1.0-3
+#library(SSModel)#v 1.0-3
+library(SSModeljags)
 library (openxlsx)
 library(compareDF)
 library(tidyverse)
@@ -129,7 +146,7 @@ CreateExcelModelFile(direct = direct,
 # --- Pre-running Model Prep work ----
 # Let's be consistent with our MCMC year over year unless there is a need to change it...
 niter = 250000  # default = 100000
-nchains = 3    # default =33
+nchains = 3    # default =3
 nburnin = 50000  # default = 50000
 nthin = 10       # default = 10
 
@@ -172,7 +189,11 @@ SPA1B.inits <- function(NY)
 
 # ---- Run the model ----
 Spa1B.model <- SSModel(SPA1B.dat,BoFSPA4.priors,SPA1B.inits(NY),model.file=BoFmodel,Years=yrs,parms = parm,
-                    nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T) 
+                       nchains=3,niter=250000,nburnin=50000,nthin=10) #,debug=T
+
+#Spa1B.model <- SSModel(SPA1B.dat,BoFSPA4.priors,SPA1B.inits(NY),model.file=BoFmodel,Years=yrs,parms = parm,
+#                   nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T) 
+
 #need to save model as year defined object for prediction evaluations 
 assign(paste0("Spa1B.", max(yrs)), Spa1B.model)   
 
@@ -183,7 +204,7 @@ save(list = paste0("Spa1B.", max(yrs)), file=paste0(direct,"/",assessmentyear, "
 #load(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1B_Model_",max(yrs),".RData"))
 
 #This is just to save you from wasting time changing the names of a bunch of lines below...
-#mod.res <- Spa1B.2025
+#mod.res <- Spa1B.2026
 mod.res <- Spa1B.model
 
 #This gives a print to screen of model results and allows you to save it
@@ -333,6 +354,9 @@ dev.off()
 # --- Prediction Evaluations - Condition Assumption ---- 
 # Load in the old model results for the prediction evaluation, this will now automatically load all the
 # necessary data up to the year you want (whatever you specified in (yrs)
+
+## WARNING ## : Since switching over to SKY, loading in Rdata files has been an issue. The lines below do not always work, some files are loaded and some are not. You may have to manually load them.
+
 t.yrs <- yrs
 pred.yr <- 2009:max(yrs) # Neeed to set this here as these loads will all overwrite the maximum year neeeded below...
 num.pred.years <- length(pred.yr)
@@ -423,7 +447,7 @@ write.csv(pred.1yr.boxplot$B.next, paste0(direct,"/",assessmentyear,"/Assessment
 #Finally here we have the decsion table.  This plots the decision table for all catch rates between 0 and 500 increments of 10 tonnes of catch (seq(0,500,10)).
 # Note that Feb 2020 DK noted that the incorrect LRP and USR were entered here (used SPA4s), checked against existing decision table and it made
 # no difference in our probabilities luckily, but I did update the decision table based on these correct values.
-decision <- predict(mod.res, Catch=c(seq(150,375,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
+decision <- predict(mod.res, Catch=c(seq(0,350,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
 decision.table<-SSModel_predict_summary_median(decision, LRP=LRP, USR=USR, RRP=0.15)
 # decision.table<-SSModel_predict_summary_median(decision, LRP=880, USR=1800, RRP=0.12)
 decision.table
