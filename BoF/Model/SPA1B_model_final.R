@@ -81,7 +81,7 @@ USR <- 1800
 # Set the value for catch next year, this is used in SSModel.plot.median() after the model runs 
 # This value should be the interim TAC in the area.
 
-catch.next.year <- 104 #2076.801*0.05 = 103.8  Interims were not decided at the time of test running the model so we are using 5% of estimated biomass from 1 year projections of 2025 model which assumes growth (predicted g and gr) and m (5 year mean) ) #SPA1B projected median biomass for 2026 is 2076.801
+catch.next.year <- 78 #Interims were set Sept 29, 2026
  
 #required packages
 #library(SSModel)#v 1.0-3

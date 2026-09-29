@@ -75,7 +75,7 @@ USR <- 750
 # Put in the catch for next year in the 2018 slot of the "C" data
 # Set the value for catch next year, this is used in SSModel.plot.median()
 # This should be based on the interim TAC for the area
-catch.next.year <- 35
+catch.next.year <- 42 #Interims were set Sept 29, 2026
 
 
 #required packages
