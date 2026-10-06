@@ -99,9 +99,9 @@ SPA1A.2to8.PreRec <- data.frame(Year=years, Mean.nums=rep(NA,X), Pop=rep(NA,X) ,
 for(i in 1:length(SPA1A.2to8.PreRec$Year)){
   if (years[i] != 2020) { 
 temp.data<-livefreq[livefreq$YEAR==1983+i,]
-SPA1A.2to8.PreRec[i,2]<-summary(PEDstrata(temp.data, strata.SPA1A.2to8.new, "STRATA_ID",catch=apply(temp.data[,13:25],1,sum),
+SPA1A.2to8.PreRec[i,2]<-summary(PEDstrata(temp.data, strata.SPA1A.2to8.new, "STRATA_ID",catch=apply(temp.data[,11:23],1,sum),
 Subset=temp.data$TOW_TYPE_ID==1))$yst
-SPA1A.2to8.PreRec[i,3]<-summary(PEDstrata(temp.data, strata.SPA1A.2to8.new, "STRATA_ID",catch=apply(temp.data[,13:25],1,sum),                                              Subset=temp.data$TOW_TYPE_ID==1))$Yst
+SPA1A.2to8.PreRec[i,3]<-summary(PEDstrata(temp.data, strata.SPA1A.2to8.new, "STRATA_ID",catch=apply(temp.data[,11:23],1,sum),                                              Subset=temp.data$TOW_TYPE_ID==1))$Yst
 }}
 SPA1A.2to8.PreRec
 
@@ -123,9 +123,9 @@ SPA1A.8to16.PreRec <- data.frame(Year=years, Mean.nums=rep(NA,X),Pop=rep(NA,X), 
 for(i in 1:length(SPA1A.8to16.PreRec$Year)){
   if (years[i] != 2020) {
 temp.data<-livefreq[livefreq$YEAR==1980+i,]
-SPA1A.8to16.PreRec[i,2]<-summary(PEDstrata(temp.data,strata.SPA1A.8to16.noctrville.new, "STRATA_ID",catch=apply(temp.data[,13:25],1,sum),
+SPA1A.8to16.PreRec[i,2]<-summary(PEDstrata(temp.data,strata.SPA1A.8to16.noctrville.new, "STRATA_ID",catch=apply(temp.data[,11:23],1,sum),
 Subset=temp.data$TOW_TYPE_ID==1))$yst
-SPA1A.8to16.PreRec[i,3]<-summary(PEDstrata(temp.data,strata.SPA1A.8to16.noctrville.new, "STRATA_ID",catch=apply(temp.data[,13:25],1,sum),                                              Subset=temp.data$TOW_TYPE_ID==1))$Yst
+SPA1A.8to16.PreRec[i,3]<-summary(PEDstrata(temp.data,strata.SPA1A.8to16.noctrville.new, "STRATA_ID",catch=apply(temp.data[,11:23],1,sum),                                              Subset=temp.data$TOW_TYPE_ID==1))$Yst
 } }
 SPA1A.8to16.PreRec
 
@@ -146,8 +146,8 @@ SPA1A.MBS.PreRec <- data.frame(Year=years, Mean.nums=rep(NA,X),Pop=rep(NA,X), me
 for(i in 1:length(SPA1A.MBS.PreRec$Year)){
   if (years[i] != 2020) {
 temp.data<-livefreq[livefreq$YEAR==1996+i,]
-SPA1A.MBS.PreRec[i,2] <- mean(apply(temp.data[temp.data$STRATA_ID==39 & temp.data$TOW_TYPE_ID==1, 13:25],1,sum))
-SPA1A.MBS.PreRec[i,3] <- mean(apply(temp.data[temp.data$STRATA_ID==39 & temp.data$TOW_TYPE_ID==1, 13:25],1,sum))*201138.52
+SPA1A.MBS.PreRec[i,2] <- mean(apply(temp.data[temp.data$STRATA_ID==39 & temp.data$TOW_TYPE_ID==1, 11:23],1,sum))
+SPA1A.MBS.PreRec[i,3] <- mean(apply(temp.data[temp.data$STRATA_ID==39 & temp.data$TOW_TYPE_ID==1, 11:23],1,sum))*201138.52
 } }
 SPA1A.MBS.PreRec
 
@@ -333,59 +333,6 @@ wt.per.tow.full.ts
 #dev.off()
 
 
-##########################################################################
-############### EDITS END HER E############
-
-
-###
-### ---- Plot Survey Numbers and Biomass for all 1A ----
-###                    
-
-
-N.for.plot <- pivot_longer(N %>% select(Year, Pre-Recruit = N.pre.rec.millions), 
-                                      cols = c(Commercial, Recruit),
-                                      names_to = "Size",
-                                      values_to = "value",
-                                      values_drop_na = FALSE)
-
-#set values that are 2020 to NA so don't plot since didn't have survey that year 
-N.for.plot$value[N.for.plot$Year == 2020] <- NA
-
-survey.numbers <- ggplot(data = N.for.plot, aes(x=Year, y=value, col=Size, pch=Size)) + 
-  geom_point() + 
-  geom_line(aes(linetype = Size)) + 
-  theme_bw() + ylab("Survey numbers (millions)") + xlab("Year") + 
-  theme(legend.position = c(0.9, 0.9)) + 
-  scale_linetype_manual(values=c("solid", "dotted"))+
-  scale_color_manual( values=c('black','red'))
-survey.numbers
-
-Bmass.for.plot <- merge(I %>% select(Year, Commercial = Bmass), IR %>% select(Year, Recruit = Bmass), by = "Year")
-
-B.for.plot <- pivot_longer(Bmass.for.plot, 
-                           cols = c(Commercial, Recruit),
-                           names_to = "Size",
-                           values_to = "value",
-                           values_drop_na = FALSE)
-
-#set values that are 2020 to NA so don't plot since didn't have survey that year 
-B.for.plot$value[B.for.plot$Year == 2020] <- NA
-
-survey.biomass <- ggplot(data = B.for.plot, aes(x=Year, y=value, col=Size, pch=Size)) + 
-  geom_point() + 
-  geom_line(aes(linetype = Size)) + 
-  theme_bw() + ylab("Survey biomass (mt)") + xlab("Year") + 
-  theme(legend.position = c(0.15, 0.9)) + 
-  scale_linetype_manual(values=c("solid", "dotted"))+
-  scale_color_manual( values=c('black','red'))
-survey.biomass
-
-png(paste0(path.directory,assessmentyear,"/Assessment/Figures/SPA1A_SurveyNumbersAndBiomass",surveyyear,".png"), type="cairo", width=30, height=25, units = "cm", res=300)
-plot_grid(survey.numbers, survey.biomass, 
-          nrow = 2, label_x = 0.15, label_y = 0.95)
-dev.off() 
-
-
 ###
 ### ---- Strata 56 -----
 ### Look at tows outside normal survey starta
@@ -412,19 +359,17 @@ X <- length(years)
 stderr <- function(x) sqrt(var(x)/length(x))
 
 #simple means
-spa1a.56.number<- data.frame(Year=years,  Mean.Com=rep(NA,X), sd.Com=rep(NA,X), Mean.Rec=rep(NA,X), sd.Rec=rep(NA,X))
+spa1a.56.number<- data.frame(Year=years, Mean.Pre.Rec=rep(NA,X), sd.Pre.Rec=rep(NA,X))
 for(i in 1:length(spa1a.56.number$Year)){
   temp.data <- spa1a.56[spa1a.56$YEAR==1983+i,]
-  spa1a.56.number[i,2] <- mean(apply(temp.data[, 27:50],1,sum), na.rm=TRUE)
-  spa1a.56.number[i,3] <- sd(apply(temp.data[, 27:50],1,sum))
-  spa1a.56.number[i,4] <- mean(apply(temp.data[, 24:26],1,sum), na.rm=TRUE)
-  spa1a.56.number[i,5] <- sd(apply(temp.data[, 24:26],1,sum))
+  spa1a.56.number[i,2] <- mean(apply(temp.data[, 11:23],1,sum), na.rm=TRUE)
+  spa1a.56.number[i,3] <- sd(apply(temp.data[, 11:23],1,sum))
 }
 spa1a.56.number
 
 # prep data for plot 
-strata56.for.plot <- pivot_longer(spa1a.56.number %>% select(Year, Commercial = Mean.Com, Recruit = Mean.Rec ) , 
-                           cols = c(Commercial, Recruit),
+strata56.for.plot <- pivot_longer(spa1a.56.number %>% select(Year, "Pre-Recruit" = Mean.Pre.Rec ) , 
+                           cols = c("Pre-Recruit"),
                            names_to = "Size",
                            values_to = "value",
                            values_drop_na = FALSE)
@@ -434,14 +379,14 @@ num.per.tow.56 <- ggplot(data = strata56.for.plot, aes(x=Year, y=value, col=Size
   geom_line(aes(linetype = Size)) + 
   theme_bw() + ylab("Survey mean no./tow") + xlab("Year") + 
   theme(legend.position = c(0.9, 0.9)) + 
-  scale_linetype_manual(values=c("solid", "dotted"))+
-  scale_color_manual( values=c('black','red'))
+  scale_linetype_manual(values=c("solid"))+
+  scale_color_manual( values=c('black'))
 num.per.tow.56
 
 #write out plot 
-png(paste0(path.directory,assessmentyear,"/Assessment/Figures/SPA1A_SurveyNumbers_strata56_",surveyyear,".png"), type="cairo", width=30, height=25, units = "cm", res=300)
-num.per.tow.56
-dev.off() 
+#png(paste0(path.directory,assessmentyear,"/Assessment/Figures/SPA1A_SurveyNumbers_strata56_",surveyyear,".png"), type="cairo", width=30, height=25, units = "cm", res=300)
+#num.per.tow.56
+#dev.off() 
 
 
 ### END OF SCRIPT ### 
