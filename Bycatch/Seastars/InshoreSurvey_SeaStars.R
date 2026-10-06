@@ -2,12 +2,12 @@
 library(ROracle)
 library(tidyverse)
 library(sf)
+library(ggspatial)
+library(ggstar)
 
 
 uid <- keyring::key_list("Oracle")[1,2]
 pwd <- keyring::key_get("Oracle", uid)
-#uid <- un.englishg
-#pwd <- pw.englishg
 
 #set year 
 survey.year <- 2026 #survey year
@@ -45,16 +45,17 @@ unzip(zipfile=temp, exdir=temp2)
 
 # Now read in the shapefiles
 mgmt.zones.detailed <- st_read(paste0(temp2, "/Scallop_Strata.shp")) %>% 
-  filter(Scal_Area != "SFA29W")
+  filter(Scal_Area != "SFA29W") %>%  
+  st_transform(crs = 4326)
 
 mgmt.zones <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/scallop_management_zones/ScallopFishingAreas_2024.shp") %>% 
   filter(str_starts(Area_Name, "SPA")) %>%  
-  st_transform(crs = 32620)
+  st_transform(crs = 4326)
 
 bathy_sf <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/bathymetry/bathymetry_15m.shp") 
 
 Land <- st_read("/vsicurl/https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/other_boundaries/Atl_region_land.shp") %>% 
-  st_transform(crs = 32620) 
+  st_transform(crs = 4326) 
 
 # -----------------------------Import SHF data (live and dead)--------------------------------------------
 
@@ -77,7 +78,9 @@ ScallopSurv <- dbGetQuery(chan, quer2)
 ScallopSurv <- ScallopSurv %>% 
   mutate(year = year(TOW_DATE)) %>%  #Formats TOW_DATE as date
   mutate(lat = convert.dd.dddd(START_LAT)) %>% #Convert to DD
-  mutate(lon = convert.dd.dddd(START_LONG)) %>% 
+  mutate(lon = convert.dd.dddd(START_LONG)) %>%
+  mutate(slat = convert.dd.dddd(START_LAT)) %>% #Convert to DD
+  mutate(slon = convert.dd.dddd(START_LONG)) %>%
   filter(year == 2026)
 
 # 1. Filter rows containing "sea stars"  #Comments for sea stars were entered consitently.
@@ -90,7 +93,32 @@ str(ScallopSurv.SStars)
 #$ TOW_NO          : int  43 44 56
 
 
-ScallopSurv.SStars.sf <- st_as_sf(ScallopSurv.SStars, coords = c("lon", "lat"), crs = 4326)
+ScallopSurv.SStars.sf <- st_as_sf(ScallopSurv.SStars, coords = c("lon", "lat"), crs = 4326) %>% 
+  add_column(Seastar_Tows = c("", "", ""))
 
-mapview::mapview(ScallopSurv.SStars.sf)
+sstar.spatial <- ggplot() + #Plot survey data and format figure.
+  #geom_sf(data = bathy_sf, color = "steelblue", alpha = 0.1, size = 0.5) +
+  geom_sf(data = mgmt.zones.detailed, color = "grey40", fill = NA, linewidth = 0.3, linetype = "solid") +
+  geom_sf(data = Land, fill = "grey60") +
+  geom_star(data = ScallopSurv.SStars.sf, aes(x = slon, y = slat, starshape = Seastar_Tows, fill = Seastar_Tows), size = 4) +
+ #scale_starshape_manual(values = c(1)) + # 1 is the default 5-point star
+  coord_sf(xlim = c(-67.5, -64.5), ylim = c(43.5, 46), expand = TRUE)+
+  labs(x = "Longitude",y = "Latitude") +
+  scale_x_continuous(labels = scales::label_number(accuracy = 0.01)) + # Custom X and Y axis formatting (easier for french translation)
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.01))+
+  annotation_scale(location = "bl", width_hint = 0.5, pad_x = unit(0.35, "cm"), pad_y = unit(0.35, "cm")) + # Add scale bar with selectable location
+  annotation_north_arrow(location = "bl", which_north = "true", height = unit(1.25, "cm"), width = unit(1, "cm"),
+                         pad_x = unit(0.35, "cm"), pad_y = unit(0.75, "cm"),style = north_arrow_fancy_orienteering) + # Add north arrow with selectable location+
+  theme_bw()+
+  theme(legend.key.size = unit(6,"mm"),
+        plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        legend.title = element_text(size = 10, face = "bold"), 
+        legend.text = element_text(size = 10),
+        #legend.position = c(.86,.22), #legend position
+        legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)),
+        legend.box.margin = margin(2, 3, 2, 3),
+        panel.border = element_rect(colour = "black", fill=NA, linewidth=1))
 
+ggsave(plot = sstar.spatial, "Y:/Inshore/Assessment/BoF/2026/Assessment/Figures/Asterias_sp_presence.png", scale = 3.5, width = 8, height = 8, dpi = 300, units = "cm", limitsize = TRUE)
