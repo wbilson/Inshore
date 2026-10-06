@@ -12,9 +12,9 @@ library(stringr)
 #DEFINE:
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-assessmentyear <- 2025 #year in which you are conducting the assessment 
-surveyyear <- 2025  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
-fishing.years <- "2024/2025"
+assessmentyear <- 2026 #year in which you are conducting the assessment 
+surveyyear <- 2026  #last year of survey data you are using, e.g. if max year of survey is survey from summer 2019, this would be 2019 
+fishing.years <- "2025/2026"
 
 #sources landings data by area 
 dat.1A <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/CommercialData/SPA1A_TACandLandings_",surveyyear,".xlsx"),sheet = "TACandLandings")
