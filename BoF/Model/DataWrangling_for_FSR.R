@@ -7,7 +7,7 @@ library(ggplot2)
 library(ggrepel)
 library(openxlsx)
 
-assessment.year <- 2025
+assessment.year <- 2026
 
 direct <- "Y:/Inshore/Assessment/BoF/"
 
@@ -16,8 +16,8 @@ direct <- "Y:/Inshore/Assessment/BoF/"
 
 #SPA1A---------------------------
 
-    modfile.1A <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/SPA1A_ModelData_R_2025-10-29.xlsx"),sheet = "AlignedForModel", cols=1:13) #CHECK FILE NAME
-    mod.sum.1A <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/Spa1AModelOutput.csv")
+    modfile.1A <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/SPA1A_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13) #CHECK FILE NAME
+    mod.sum.1A <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/Spa1AModelOutput.csv"))
     
     colnames(mod.sum.1A) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
     m.rows.1A <- grep("^m\\[", mod.sum.1A$vars)
@@ -36,8 +36,8 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
 #SPA1B---------------------------   
   
-    modfile.1B <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/SPA1B_ModelData_R_2025-10-30.xlsx",sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
-    mod.sum.1B <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/Spa1BModelOutput.csv")
+    modfile.1B <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/SPA1B_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    mod.sum.1B <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/Spa1BModelOutput.csv"))
   
     colnames(mod.sum.1B) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
     m.rows.1B <- grep("^m\\[", mod.sum.1B$vars)
@@ -56,8 +56,8 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
   #SPA3---------------------------      
     
-    modfile.3 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/SPA3_ModelData_R_2025-10-20.xlsx",sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
-    mod.sum.3 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/Spa3ModelOutput.csv")
+    modfile.3 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/SPA3_ModelData_R_2026-09-15.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    mod.sum.3 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/Spa3ModelOutput.csv"))
     
     colnames(mod.sum.3) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
     m.rows.3 <- grep("^m\\[", mod.sum.3$vars)
@@ -76,8 +76,8 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
   #SPA4--------------------------- 
     
-    modfile.4 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/SPA4_ModelData_R_2025-10-20.xlsx",sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
-    mod.sum.4 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/Spa4ModelOutput.csv")
+    modfile.4 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/SPA4_ModelData_R_2026-09-15.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    mod.sum.4 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/Spa4ModelOutput.csv"))
     
     colnames(mod.sum.4) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
     m.rows.4 <- grep("^m\\[", mod.sum.4$vars)
@@ -96,8 +96,8 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
 #SPA6---------------------------  
 
-    modfile.6 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/SPA6_ModelData_R_2025-10-16.xlsx",sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
-    mod.sum.6 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/Spa6ModelOutput.csv")
+    modfile.6 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/SPA6_ModelData_R_2026-09-16.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    mod.sum.6 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/Spa6ModelOutput.csv"))
   
     colnames(mod.sum.6) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
     m.rows.6 <- grep("^m\\[", mod.sum.6$vars)
@@ -118,7 +118,7 @@ direct <- "Y:/Inshore/Assessment/BoF/"
   
 all.mort <- rbind(mort.1A, mort.1B, mort.3, mort.4, mort.6)
     
-write.csv(all.mort, paste0(paste0(direct,assessment.year,"/Assessment/Data/Model/BoF_Proportional_Natural_Mortality_",assessment.year,".csv"), row.names = F)
+write.csv(all.mort, paste0(direct,assessment.year,"/Assessment/Data/Model/BoF_Proportional_Natural_Mortality_",assessment.year,".csv"), row.names = F)
     
 ###########################################################################################################################################################
 
@@ -150,7 +150,7 @@ mu.1B$X <- c((1997):(1996+nrow(mu.1B)))
 
 #SPA3---------------------------      
 
-mu.3 <- read.csv(paste0(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/spa3ModelOutput.csv"), header=T)
+mu.3 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/spa3ModelOutput.csv"), header=T)
 mu.3 <- mu.3 %>%
   filter(str_detect(X, "mu")) %>%
   mutate(X = parse_number(X)) %>%
@@ -162,7 +162,7 @@ mu.3$X <- c((1996):(1995+nrow(mu.3)))
 
 #SPA4--------------------------- 
 
-mu.4 <- read.csv(paste0(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/spa4ModelOutput.csv"), header=T)
+mu.4 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/spa4ModelOutput.csv"), header=T)
 mu.4 <- mu.4 %>%
   filter(str_detect(X, "mu")) %>%
   mutate(X = parse_number(X)) %>%
@@ -174,7 +174,7 @@ mu.4$X <- c((1983):(1982+nrow(mu.4)))
 
 #SPA6---------------------------  
 
-mu.6 <- read.csv(paste0(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/spa6ModelOutput.csv"), header=T)
+mu.6 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/spa6ModelOutput.csv"), header=T)
 mu.6 <- mu.6 %>%
   filter(str_detect(X, "mu")) %>%
   mutate(X = parse_number(X)) %>%
