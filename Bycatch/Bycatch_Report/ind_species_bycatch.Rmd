@@ -1,0 +1,455 @@
+---
+title: "SPECIES SUMMARY"
+author: "Amy Glass"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+```{r NOTES, include=FALSE}
+#This script allows you to select a single species to provide a details report by species
+#insert username and password on line 96
+#This script uses standardized bycatch data except for the histograms which uses the measured values of individuals.
+
+# NOTE: expects Github GIS Repo to be here gis.repo = 'D:/Github/GIS_layers' -- if not, need to update ~ line 335
+# NOTE: Update username and password on ~ lines 123-124
+
+#potential species
+#COD(ATLANTIC)	10
+#HADDOCK	11
+#WHITE HAKE	12
+#SQUIRREL OR RED HAKE	13
+#SILVER HAKE	14
+#CUSK	15
+#TOMCOD(ATLANTIC)	17
+#HAKE (NS)	18
+#REDFISH	20
+#HALIBUT(ATLANTIC)	30
+#AMERICAN PLAICE	40
+#WITCH FLOUNDER	41
+#YELLOWTAIL FLOUNDER	42
+#WINTER FLOUNDER	43
+#GULF STREAM FLOUNDER	44
+#STRIPED ATLANTIC WOLFFISH	50
+#HERRING(ATLANTIC)	60
+#LONGFIN HAKE	112
+#SOUTHERN SEA BASS	121
+#CUNNER	122
+#ROSEFISH(BLACK BELLY)	123
+#SUMMER FLOUNDER	141
+#FOURSPOT FLOUNDER	142
+#BRILL/WINDOWPANE	143
+#ARGENTINE(ATLANTIC)	160
+#BARNDOOR SKATE	200
+#THORNY SKATE	201
+#SMOOTH SKATE	202
+#LITTLE SKATE	203
+#WINTER SKATE	204
+#SPINY DOGFISH	220
+#SEA LAMPREY	240
+#SMELTS,CAPELIN (NS)	337
+#MONKFISH,GOOSEFISH,ANGLER	400
+#AHLIA EGMONTIS	441
+#LUMPFISH	501
+# 4-LINE SNAKE BLENNY	626
+#OCEAN POUT(COMMON)	640
+#BUTTERFISH	701
+#EELPOUT (NS)	845
+#LEUCORAJA <35cm	1191
+#AMERICAN LOBSTER	2550
+#CEPHALOPODA C.	4500
+#SHORT-FIN SQUID	4511
+#SEMIROSSIA TENERA	4522
+#BATHYPOLYPUS ARCTICUS	4524
+#CUCUMARIA FRONDOSA	6611
+
+
+
+#INSERT SPECIES CODE AND COMMON NAME (ALL CAPS)
+spcd<- 43
+sp<- "WINTER FLOUNDER"
+
+```
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set()
+#setwd("C:\Users\GlassA\Desktop\Inshore Scallop\bycatch")
+
+# List of packages for session
+.packages = c("dplyr",
+  "lubridate",
+  "sf",
+  "tidyr",
+  "flextable",
+  "data.table",
+  "ggplot2",
+  "ftExtra",
+  "janitor",
+  "rgdal",
+  "terra",
+  "patchwork",
+  "viridis",
+  "ROracle",
+  "knitr",
+  "tinytex",
+  "kableExtra",
+  "haven",
+  "gridExtra",
+  "marmap", 
+  "rnaturalearth",
+  "rnaturalearthdata",
+   "ggspatial")
+ 
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, require, character.only=TRUE)
+
+
+#import functions from marscal
+funcs <- c(#"https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
+           "https://raw.githubusercontent.com/Mar-scal/Inshore/master/contour.gen.r")
+dir <- getwd()
+for(fun in funcs) 
+{
+  temp <- dir
+  download.file(fun,destfile = basename(fun))
+  source(paste0(dir,"/",basename(fun)))
+  file.remove(paste0(dir,"/",basename(fun)))
+}
+
+#Define username and pw 
+#un.ID <- keyring::key_list("Oracle")[1,2]
+#pw.ID <- keyring::key_get("Oracle", un.ID)
+
+un.ID <- un.sameotoj
+pw.ID <- pw.sameotoj
+
+##Data pull
+con <- dbConnect(DBI::dbDriver("Oracle"), un.ID, pw.ID, 'ptran')
+bycatch <- dbGetQuery(con, (" SELECT * from SCALLSUR.SCBYCATCH_STD"))
+
+tows <- dbGetQuery(con, ("SELECT TOW_SEQ, CRUISE, TOW_NO, TOW_DATE, TOW_TYPE_ID, STRATA_ID, START_LAT, START_LONG, TOW_DIR, TOW_LEN, TOW_LEN_ID, DEPTH, BOTTOM_TEMP, BOTTOM_ID, MGT_AREA_ID from SCALLSUR.SCTOWS"))
+
+#formatting of bycatch data
+bycatch$COMMON[bycatch$COMMON == "BATHYPOLYPUS ARCTICUS"] <- "NORTH ATLANTIC OCTOPUS"
+bycatch$COMMON[bycatch$COMMON == "SEMIROSSIA TENERA"] <- "LESSER BOBTAIL SQUID"
+bycatch$COMMON[bycatch$COMMON == "BRILL/WINDOWPANE"] <- "WINDOWPANE FLOUNDER"
+bycatch$COMMON[bycatch$COMMON == "AHLIA EGMONTIS"] <- "KEY WORM EEL"
+bycatch$COMMON[bycatch$COMMON == "LEUCORAJA <35cm"] <- "LITTLE OR WINTER SKATE under 35cm"
+
+bycatch<-bycatch %>% 
+  dplyr::filter(SPECCD_ID == spcd)
+
+bycatch$SLAT<-convert.dd.dddd(bycatch$START_LAT,format='dec.deg')
+bycatch$SLONG<-convert.dd.dddd(bycatch$START_LON,format='dec.deg')
+bycatch$ELAT<-convert.dd.dddd(bycatch$END_LAT,format='dec.deg')
+bycatch$ELONG<-convert.dd.dddd(bycatch$END_LON,format='dec.deg')
+
+#format date to allow to select data by year
+bycatch$SEX_ID<- as.character(bycatch$SEX_ID) 
+bycatch$TOW_DATE<- as.Date(bycatch$TOW_DATE)
+bycatch <- bycatch %>%
+  dplyr::mutate(year = lubridate::year(TOW_DATE), 
+                month = lubridate::month(TOW_DATE), 
+                day = lubridate::day(TOW_DATE))
+bycatch$year<-as.character(bycatch$year)
+bycatch$SEX_ID<-as.character(bycatch$SEX_ID)
+
+bycatch$SEX_ID[bycatch$SEX_ID == "0"] <- "Not sexed"
+bycatch$SEX_ID[bycatch$SEX_ID == "1"] <- "Male"
+bycatch$SEX_ID[bycatch$SEX_ID == "2"] <- "Female"
+bycatch$SEX_ID[bycatch$SEX_ID == "3"] <- "Berried Female"
+
+
+#species = unique(bycatch$COMMON)  #to get a list of all species encountered 
+
+#format tow data
+tows$TOW_DATE<- as.Date(tows$TOW_DATE)
+tows <- tows %>%
+  dplyr::mutate(year = lubridate::year(TOW_DATE), 
+                month = lubridate::month(TOW_DATE), 
+                day = lubridate::day(TOW_DATE))
+
+tows$year<-as.character(tows$year)
+tows$SLAT<-convert.dd.dddd(tows$START_LAT,format='dec.deg')
+tows$SLONG<-convert.dd.dddd(tows$START_LON,format='dec.deg')
+tows<- tows %>% 
+  dplyr::select(TOW_SEQ, CRUISE, TOW_NO, MGT_AREA_ID, year, month, day, SLAT, SLONG, DEPTH, TOW_DIR, TOW_LEN, BOTTOM_TEMP,)
+
+ 
+#to set up loop for each species
+#species = species[order(species)]
+#species_data = list()
+yrs = as.character(unique(bycatch$year))
+yrs = yrs[order(yrs)]
+
+bycatch_by_tow<-bycatch %>% 
+  dplyr::select(TOW_SEQ, CRUISE, MGT_AREA_ID, TOW_NO, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR, ABUNDANCE_RAW, ABUNDANCE_STD, SLAT, SLONG, year, month, day) %>% 
+  group_by(TOW_SEQ, year, CRUISE, TOW_NO, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR) %>% 
+  dplyr::summarise(abun_raw = sum(ABUNDANCE_RAW), abun_std = sum(ABUNDANCE_STD))
+
+
+
+species_data<- bycatch_by_tow %>% 
+    right_join(y= tows, by = c("TOW_SEQ", "year", "CRUISE", "TOW_NO")) %>% 
+    mutate(across(where(is.numeric), ~ replace_na(.x, 0))) #%>%  #Assumes all NAs are 0
+  #write.csv(species_data[[sp[i]]], file=paste0(sp[i],".csv"), row.names = FALSE)
+
+###what seems like extra records is when there is a meas_id =9 (animal unmeasured) it #separates it from what is measured and creates a second row for the tow
+ 
+```
+# REPORT FOR `r paste(sp, sep = ', species code ', spcd)`.
+# Introduction
+
+The Inshore Scallop Survey collects data on the stocks of Sea Scallop (*Placopecten magellanicus*) in the Bay of Fundy and Approaches.  The Inshore Scallop Survey Database (SCALLSUR) contains all data collected on the Inshore Scallop Stock Assessment Surveys.
+
+The Inshore Scallop Survey occurs annually between May and September with few exceptions. Spatial coverage, survey designs and survey fishing gear have changed over time. Currently, the gear used to conduct the survey is 9 gang toothed miracle scallop gear with flat tire chaffers, deployed from a commercial scallop dragger. Each drag is 2 ft by 1 ft. 2 drags are lined with 38 mm polypropylene stretch mesh, and the remaining 7 drags are unlined. At each station an approx. 800 meter tow at a speed of 2.5-3.5 knots is conducted.
+
+The survey bycatch sampling protocols have been refined since the start of the survey time series, with reliable collection start dates varying depending on study area and species.      
+Refer to **Bycatch Protocol 2023.doc** for details of data collection.
+
+All species data have been standardized to 800m tow length and 17.5 feet of survey fishing gear. 
+
+
+
+
+\newpage
+
+```{r tables, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE, fig.align= "center", results='asis'}
+#annual bycatch summary tables for each most current CRUISE
+#options(knitr.table.format = "latex")
+
+#Get max year 
+ #myr <- tows %>% 
+#   dplyr::select(year) %>% 
+#   dplyr::summarize(max(year))
+#get list of areas in most current year
+
+
+sex_all = as.character(unique(bycatch$SEX_ID))
+sex_all = sex_all[order(sex_all)]
+
+datayr = list()
+
+for(i in 1:length(yrs)) { 
+datayr[[yrs[i]]] <- species_data %>% 
+    dplyr::filter(year == yrs[i])
+}
+
+
+```
+\newpage
+# Species Summaries
+
+```{r line plots, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, results='asis'}
+####2. create std_abundance by species by year. 
+## sum of total std count per year by species, and line plot
+#select species and sex
+npy<-bycatch %>% 
+  dplyr::filter(SPECCD_ID == spcd) %>% 
+  dplyr::select(TOW_SEQ, CRUISE, MGT_AREA_ID, TOW_NO, SEX_ID, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR, ABUNDANCE_RAW, ABUNDANCE_STD, SLAT, SLONG, year, month, day) %>% 
+  group_by(COMMON, year) %>% 
+  dplyr::summarise(abun_raw = sum(ABUNDANCE_RAW), abun_std = sum(ABUNDANCE_STD))
+
+#to add a row for 2020 so the data plots properly
+new_row_2020 <- data.frame(
+  COMMON = sp,
+  year = "2020",
+  abun_raw = NA,
+  abun_std = NA
+  )
+
+npy<- rbind(npy,new_row_2020)
+
+
+#npy$year<-as.numeric(npy$year)
+every_nth = function(n) {
+  return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
+}
+ 
+ npy_plot<- npy %>% 
+   ggplot()+
+    geom_point(aes(x=year, y = abun_std)) + 
+    geom_line(aes(x=year, y = abun_std, group = 1))+
+    scale_x_discrete(breaks = every_nth(n = 2))+
+    ggtitle(sp)+
+    labs(y= "Total standardized number", x = "Year")
+
+  npy_plot
+
+
+npy2<-bycatch %>% 
+  dplyr::filter(SPECCD_ID == spcd) %>% 
+  dplyr::select(TOW_SEQ, CRUISE, MGT_AREA_ID, TOW_NO, SEX_ID, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR, ABUNDANCE_RAW, ABUNDANCE_STD, SLAT, SLONG, year, month, day) %>% 
+  group_by(COMMON, year, SEX_ID) %>% 
+  dplyr::summarise(abun_raw = sum(ABUNDANCE_RAW), abun_std = sum(ABUNDANCE_STD))
+
+##to add rows for 2020 so the data plots properly
+m_row_2020 <- data.frame(
+  COMMON = sp,
+  year = "2020",
+  SEX_ID = "Male",
+  abun_raw = as.numeric(NA),
+  abun_std = as.numeric(NA))
+
+f_row_2020 <- data.frame(
+  COMMON = sp,
+  year = "2020",
+  SEX_ID = "Female",
+  abun_raw = as.numeric(NA),
+  abun_std = as.numeric(NA))
+
+new_row_2020<-rbind(m_row_2020, f_row_2020)
+
+npy2<- rbind(npy2,new_row_2020)
+
+
+ npy2_plot<- npy2 %>% 
+   group_by(SEX_ID) %>% 
+   ggplot()+
+   geom_point(aes(x=year, y = abun_std, color = SEX_ID)) + 
+   geom_line(aes(x=year, y = abun_std, color = SEX_ID, group = SEX_ID))+
+   scale_x_discrete(breaks = every_nth(n = 2))+
+   labs(y= "Total standardized number", x = "Year") + 
+    theme(legend.position = c(0.1, 0.8))+
+    theme(legend.title = element_blank())
+
+  npy2_plot
+  
+  
+  
+```
+
+```{r histograms, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+####3. create histograms of size by year
+
+  hist<-bycatch %>% 
+    dplyr::filter(year > 1989, SPECCD_ID == spcd) %>% 
+    ggplot(aes(x = MEAS_VAL))+
+    geom_histogram(bins=40)+facet_wrap(.~year)+
+    labs(x ='Measured Value', y='Count')
+
+
+
+sex_hist = list()
+for(i in 1:length(sex_all)) { 
+  sex_hist[[sex_all[i]]] <- bycatch %>% 
+  dplyr::filter(year > 1989, SPECCD_ID == spcd, SEX_ID == sex_all[i]) %>% 
+    ggplot( aes(x = MEAS_VAL))+
+    ggtitle(paste0(sp, sep = " - ", sex_all[i]))+
+    geom_histogram(bins=40)+
+    facet_wrap(.~year)
+}
+
+  
+```
+
+```{r maps, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+##5. create data set and plot of abundance location maps for current year surveys
+###############################################################################################
+#writes the most recent survey data sets 
+####use this output to make maps
+#species_data_year = list()
+#for(i in 1:length(yrs)) { 
+#  species_data_year[[yrs[i]]] <- bycatch_by_tow %>% 
+#    dplyr::filter(year == yrs[i])
+#  }
+#    dplyr::filter(SPECCD_ID == species) %>%
+#    right_join(y= tows, by = c("TOW_SEQ", "year", "CRUISE", "TOW_NO")) %>% 
+#    mutate(across(where(is.numeric), ~ replace_na(.x, 0))) %>% #Assumes all NAs are 0
+#    mutate(num_std = round(abun_std)) %>% 
+    
+  #write.csv(species_data_max_year[[species[i]]], file=paste0("max_year_data", species[i],".csv"), row.names = FALSE)
+#}
+#### SETTING UP FOR LOOP FOR MAPS####
+
+#p<- pecjector(repo ='github',c_sys="ll", gis.repo = 'D:/Github/GIS_layers' , plot=F,plot_as = 'ggplot',
+#              add_layer = list(land = "grey", scale.bar = c('bl',0.5,-1,-1)))
+
+
+
+#define for plotting ****MAY NEED TO ADJUST INTERVALS****
+#Set legend format for species maps for current year
+# set to max Little/Winter skate as it currently has the highest numbers
+
+
+lvls <- c(0,.60,5,15,30,60,100,260)
+labels <- c("0","1-5","6-15","16-30","31-60", "61-100", "100-max")
+
+#data set up to include breaks for maps 
+for(i in 1:length(yrs)) {  
+  datayr[[yrs[i]]]<- (datayr[[yrs[i]]])%>% 
+    mutate(brk = cut(abun_std, breaks = lvls, labels = labels, include.lowest = TRUE))
+}
+
+#get world map from natural earth data 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world <- world[world$subregion == "Northern America",]
+ 
+ 
+species_yr_maps = list()
+for(i in 1:length(yrs)) {
+  species_yr_maps[[yrs[i]]]<-ggplot(data = world) +
+    geom_sf() +  
+    geom_spatial_point(data = datayr[[yrs[i]]], aes(SLONG, SLAT, size = brk, shape = brk)) +
+    scale_shape_manual("Number per Tow",values = c(4, 19, 19, 19, 19, 19, 19), labels = labels)+ #Formatting the shape
+    scale_size_manual("Number per Tow", values = c(2, 1, 3, 5, 7, 9, 11), labels = labels)+
+    # Formatting the size for each break
+    ggtitle(paste0(sp,sep = " - ", yrs[i]))+
+    labs(x = "Longitude",y = "Latitude") +
+    coord_sf(xlim = c(-67.25,-64), ylim = c(43,45.75), expand = FALSE) +
+    theme(legend.key.size = unit(6,"mm"),
+          plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
+          axis.title = element_text(size = 10),
+          axis.text = element_text(size = 10),
+          legend.title = element_text(size = 9, face = "bold"), 
+          legend.text = element_text(size = 9),
+          legend.position = c(.85,.25), #legend position
+          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)),
+          legend.box.margin = margin(2, 1, 1, 1),
+          panel.border = element_rect(colour = "black", fill=NA, size=1)) + theme_bw()
+}
+
+
+#for(i in 1:length(yrs)) {
+#  species_yr_maps[[yrs[i]]]<-p + #Plot survey data and format figure.
+#    geom_spatial_point(data = datayr[[yrs[i]]], aes(SLONG, SLAT, size = brk, shape = brk)) +
+#    scale_shape_manual("Number per Tow",values = c(4, 19, 19, 19, 19, 19, 19), labels = labels)+ #Formatting the shape
+#    scale_size_manual("Number per Tow", values = c(2, 1, 3, 5, 7, 9, 11), labels = labels)+
+#    # Formatting the size for each break
+#    ggtitle(paste0(sp,sep = " - ", yrs[i]))+
+#    labs(x = "Longitude",y = "Latitude") +
+#    coord_sf(xlim = c(-67.25,-64), ylim = c(43,45.75), expand = FALSE) +
+#    theme(legend.key.size = unit(6,"mm"),
+#          plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
+#          axis.title = element_text(size = 10),
+#          axis.text = element_text(size = 10),
+#          legend.title = element_text(size = 9, face = "bold"), 
+#          legend.text = element_text(size = 9),
+#          legend.position = c(.85,.25), #legend position
+#          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)),
+#          legend.box.margin = margin(2, 1, 1, 1),
+#          panel.border = element_rect(colour = "black", fill=NA, size=1))
+  # ggsave(species_maps[[species[i]]], file=paste0("/maps/max_year_map_", species[i],".png"), width = 44.45, height = 27.78, units = "cm", dpi=300)
+#}
+```
+```{r Figures, include=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 12, fig.height= 14, results='asis'}
+
+
+grid.arrange(npy_plot, npy2_plot, ncol = 1)
+cat("\n\n\\pagebreak\n")
+for(i in 1:length(sex_all)) { 
+grid.arrange(sex_hist[[sex_all[i]]], ncol = 1)
+}
+cat("\n\n\\pagebreak\n")
+for(i in 1:length(yrs)) { 
+print(species_yr_maps[[yrs[i]]], scale = 5, width =30, height = 30, dpi = 300, units = "cm")
+}
+```
+

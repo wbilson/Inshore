@@ -1,0 +1,446 @@
+---
+title: "INSHORE SCALLOP SURVEY BYCATCH SUMMARY REPORT"
+author: "Amy Glass"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+```{r NOTES, include=FALSE}
+#This script uses standardized bycatch data except for the histograms which uses the measured values of individuals.
+
+
+#This script is able to print standardized data files for each species which includes all tows for presence/absence data
+
+#There is code to print all tables, plots and maps individually that is commented out but can be used to print outputs as needed
+
+# NOTE: expects Github GIS Repo to be here gis.repo = 'D:/Github/GIS_layers' -- if not, need to update ~ line 322
+# NOTE: Update username and password on ~ lines 65-66
+
+```
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set()
+#setwd("E:/Inshore/Bycatch/bycatch_report")
+library(dplyr)
+library(lubridate)
+library(sf)
+library(tidyr)
+library(flextable)
+library(data.table)
+library(ggplot2)
+library(gt)
+library(ftExtra)
+library(janitor)
+library(rgdal)
+library(terra)
+library(patchwork)
+library(viridis)
+#library(RStoolbox)
+library(ROracle)
+library(knitr)
+library(tinytex)
+library(kableExtra)
+library(haven)
+library(gridExtra)
+library(collapse)
+library("rnaturalearth")
+library("rnaturalearthdata")
+library(ggspatial)
+
+#ggplot(data = world) +
+#geom_sf() +  coord_sf(xlim = c(-67.25,-64), ylim = c(43,45.75), expand = FALSE)  + theme_bw()
+
+#### Import Mar-scal functions
+funcs <- c(#"https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
+           "https://raw.githubusercontent.com/Mar-scal/Inshore/master/contour.gen.r")
+dir <- getwd()
+for(fun in funcs) 
+{
+  temp <- dir
+  download.file(fun,destfile = basename(fun))
+  source(paste0(dir,"/",basename(fun)))
+  file.remove(paste0(dir,"/",basename(fun)))
+}
+
+##Data pull
+#con= dbConnect(DBI::dbDriver("Oracle"), un.sameotoj, pw.sameotoj, 'ptran') 
+
+#un.ID <- keyring::key_list("Oracle")[1,2]
+#pw.ID <- keyring::key_get("Oracle", un.ID)
+un.ID <- un.sameotoj
+pw.ID <- pw.sameotoj
+
+con= dbConnect(DBI::dbDriver("Oracle"), un.ID, pw.ID, 'ptran')
+bycatch=dbGetQuery(con, (" SELECT * from SCALLSUR.SCBYCATCH_STD"))
+
+tows=dbGetQuery(con, ("SELECT TOW_SEQ, CRUISE, TOW_NO, TOW_DATE, TOW_TYPE_ID, STRATA_ID, START_LAT, START_LONG, TOW_DIR, TOW_LEN, TOW_LEN_ID, DEPTH, BOTTOM_TEMP, BOTTOM_ID, MGT_AREA_ID from SCALLSUR.SCTOWS"))
+
+
+
+#formatting of bycatch data
+bycatch$COMMON[bycatch$COMMON == "BATHYPOLYPUS ARCTICUS"] <- "NORTH ATLANTIC OCTOPUS"
+bycatch$COMMON[bycatch$COMMON == "SEMIROSSIA TENERA"] <- "LESSER BOBTAIL SQUID"
+bycatch$COMMON[bycatch$COMMON == "BRILL/WINDOWPANE"] <- "WINDOWPANE FLOUNDER"
+bycatch$COMMON[bycatch$COMMON == "AHLIA EGMONTIS"] <- "KEY WORM EEL"
+#combining white, red and Hake (NS) together
+#This will also produce a combined data file for Red, White and HAKE (NS). These can be distinguished in the file by speccd_id and scientific name
+bycatch$COMMON[bycatch$COMMON == "WHITE HAKE"] <- "HAKE (NS)"
+bycatch$COMMON[bycatch$COMMON == "SQUIRREL OR RED HAKE"] <- "HAKE (NS)"
+bycatch$COMMON[bycatch$COMMON == "LEUCORAJA <35cm"] <- "LITTLE OR WINTER SKATE under 35cm"
+
+bycatch$SLAT<-convert.dd.dddd(bycatch$START_LAT,format='dec.deg')
+bycatch$SLONG<-convert.dd.dddd(bycatch$START_LON,format='dec.deg')
+bycatch$ELAT<-convert.dd.dddd(bycatch$END_LAT,format='dec.deg')
+bycatch$ELONG<-convert.dd.dddd(bycatch$END_LON,format='dec.deg')
+
+#format date to allow to select data by year
+bycatch$TOW_DATE<- as.Date(bycatch$TOW_DATE)
+bycatch <- bycatch %>%
+  dplyr::mutate(year = lubridate::year(TOW_DATE), 
+                month = lubridate::month(TOW_DATE), 
+                day = lubridate::day(TOW_DATE))
+
+#to get species that has more than one record
+s<- bycatch %>% 
+  group_by(COMMON) %>% 
+  #removing uncommon species with only one or few records
+  #update this filter accordingly
+  filter(!COMMON %in% c("CEPHALOPODA C.", "ROSEFISH(BLACK BELLY)", "SMELTS,CAPELIN (NS)", "EELPOUT (NS)", "SUMMER FLOUNDER", "GULF STREAM FLOUNDER", "ALEWIFE")) %>% 
+  dplyr::filter(year == 2023) %>% 
+  summarise(n = n()) %>% 
+  filter(n > 1)
+
+species_all = unique(bycatch$COMMON)  #to get a list of all species encountered 
+species = unique(s$COMMON) # to get a list of species for the report
+omit = setdiff(species_all, species) #species that were omitted from the plots and maps in report, referenced in introduction
+omit = omit[order(omit)]
+#format tow data
+tows$TOW_DATE<- as.Date(tows$TOW_DATE)
+tows <- tows %>%
+  dplyr::mutate(year = lubridate::year(TOW_DATE), 
+                month = lubridate::month(TOW_DATE), 
+                day = lubridate::day(TOW_DATE))
+
+tows$SLAT<-convert.dd.dddd(tows$START_LAT,format='dec.deg')
+tows$SLONG<-convert.dd.dddd(tows$START_LON,format='dec.deg')
+tows<- tows %>% 
+  dplyr::select(TOW_SEQ, CRUISE, TOW_NO, MGT_AREA_ID, year, month, day, SLAT, SLONG, DEPTH, TOW_DIR, TOW_LEN, BOTTOM_TEMP)
+
+
+#to set up total tows for survey area to be used in the footer of the tables
+ n <- tows %>% 
+  dplyr::filter(year == max(year)) %>% 
+  dplyr::select(CRUISE, TOW_NO) %>% 
+  group_by(CRUISE) %>% 
+  summarise(total_records = n_distinct(TOW_NO)) %>% 
+   rename(areas = CRUISE)
+ 
+#to set up loop for each species
+species = species[order(species)]
+species_data = list()
+
+
+bycatch_by_tow<-bycatch %>% 
+  dplyr::select(TOW_SEQ, CRUISE, MGT_AREA_ID, TOW_NO, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR, ABUNDANCE_RAW, ABUNDANCE_STD, SLAT, SLONG, year, month, day) %>% 
+  group_by(TOW_SEQ, year, CRUISE, TOW_NO, SPECCD_ID, COMMON, SCIENTIFIC, MEAS_ID, TOTAL_SAMPLED_GEAR) %>% 
+  dplyr::summarise(abun_raw = sum(ABUNDANCE_RAW), abun_std = sum(ABUNDANCE_STD)) 
+
+
+
+for(i in 1:length(species_all)) { 
+species_data[[species_all[i]]] <- bycatch_by_tow %>% 
+    dplyr::filter(COMMON == species_all[i]) %>% 
+    right_join(y= tows, by = c("TOW_SEQ", "year", "CRUISE", "TOW_NO")) %>% 
+  replace_NA( value = 0, cols = c("abun_raw", "abun_std"), set = FALSE)
+   # mutate(across(where(is.numeric), ~ replace_na(., 0))) #%>%  #Assumes all NAs are 0
+}
+
+new_row_2020 <- data.frame(
+    COMMON = NA,
+    year = 2020,
+    TOW_SEQ = 0,
+    CRUISE = "XX2020",
+    TOW_NO = 0,
+    abun_raw = NA,
+    abun_std = NA
+    #Add other columns as needed with NA values
+  )
+
+for(i in 1:length(species_all)) { 
+species_data[[species_all[i]]]<-
+     rbind(species_data[[species_all[i]]],new_row_2020)
+}
+#This writes a data file for all species ever recorded on the inshore scallop survey  
+write.csv(species_data[[species_all[i]]],file=paste0("species_data/std_data_",species_all[i],".csv"), row.names = FALSE)
+
+###what seems like extra records is when there is a meas_id =9 (animal unmeasured) it #separates it from what is measured and creates a second row for the tow
+  
+```
+
+# Introduction
+The Inshore Scallop Survey collects data on the stocks of Sea Scallop (*Placopecten magellanicus*) in the Bay of Fundy and Approaches.  The Inshore Scallop Survey Database (SCALLSUR) contains all data collected on the Inshore Scallop Stock Assessment Surveys.
+
+The Inshore Scallop Survey occurs annually between May and September with few exceptions. Spatial coverage, survey designs and survey fishing gear have changed over time. Currently, the gear used to conduct the survey is 9 gang toothed miracle scallop gear with flat tire chaffers, deployed from a commercial scallop dragger. Each drag is 2 ft by 1 ft. 2 drags are lined with 38 mm polypropylene stretch mesh, and the remaining 7 drags are unlined. At each station an approx. 800 meter tow at a speed of 2.5-3.5 knots is conducted.
+
+The survey bycatch sampling protocols have been refined since the start of the survey time series, with reliable collection start dates varying depending on study area and species. Currently, these protocols include:  
+-identification and measurement of all commercial fish species, and total length or fork length if possible (cm).  
+-Skate species are sexed and measured (cm).  
+-Lobsters are sexed (male, female or berried female) and carapace length measured in (mm).  
+-Cephalopods are sexed and mantle length measured in mm.      
+
+Refer to **Bycatch Protocol 2023.doc** for details of data collection.
+
+For the purpose of this report:  
+        -Horse mussel and Sea Cucumber data are collected but not included here.  
+        -Red Hake, White Hake and Hake (NS) have been grouped under Hake (NS).  
+        -Species with no official sampling protocol and few observations have been omitted.           For this report, omitted species are:  
+        `r paste(unlist(omit), sep = ', ')`.  
+
+All species data have been standardized to 800m tow length and 17.5 feet of survey fishing gear. A data file output containing standardized abundance by tow is located in   E:/Inshore/Bycatch/bycatch_report/data
+
+\newpage
+
+```{r tables, echo=FALSE, include=TRUE, message=FALSE, warning=FALSE, results = 'asis', fig.align= "center", fig.width=50}
+#annual bycatch summary tables for each most current CRUISE
+options(knitr.table.format = "latex")
+
+#Get max year 
+ myr <- tows %>% 
+   dplyr::select(year) %>% 
+   dplyr::summarize(max(year))
+#get list of areas in most current year
+areas<-unlist(bycatch %>%
+                dplyr::filter(year == max(year)) %>% 
+                distinct(CRUISE))
+areas = areas[order(areas)]
+area_tables = list()
+
+
+for(i in 1:length(areas)) {
+  area_tables[[areas[i]]]<-bycatch %>%
+    dplyr::filter(year == max(year), CRUISE == areas[i]) %>% 
+    group_by(COMMON) %>% 
+    dplyr::summarize(TOWS = n_distinct(TOW_NO),
+                     TOTAL = sum(ABUNDANCE_STD)) %>% 
+     # mutate(across(where(is.numeric), ~ round(., digits = 2))) %>% 
+    arrange(COMMON)
+  
+  names(area_tables[[areas[i]]])[1]<-"COMMON NAME"
+  names(area_tables[[areas[i]]])[2]<-"NO. OF TOWS WITH SPECIES"
+  names(area_tables[[areas[i]]])[3]<-"TOTAL CATCH (STD)"
+}
+
+#use the below lines for tables, add in footnote for total number of tows
+#for(i in 1:length(areas)) {
+#   print(knitr::kable(area_tables[[areas[i]]], booktabs = TRUE, caption = paste0("Standardized Survey Bycatch Summary - ", areas[i]), align = "lcl")) 
+#cat("\n\n\\pagebreak\n")
+#}
+
+##table title and subtitle need to be updated each year
+BF_tbl <- gt(area_tables[["BF2023"]]) #update
+BF_tbl %>%  
+  tab_header(
+    title = "Standardized Survey Bycatch Summary - BF2023", #update
+    subtitle = "n = 337") %>% #update
+  tab_options(table.width = pct(60))
+#print(BF_tbl)
+cat('\\pagebreak')
+
+BI_tbl <- gt(area_tables[["BI2023"]])
+BI_tbl %>% 
+  tab_header(
+    title = "Standardized Survey Bycatch Summary - BI2023",
+    subtitle = "n = 136")
+
+#print(BI_tbl)
+cat('\\pagebreak')
+
+GM_tbl <- gt(area_tables[["GM2023"]])
+GM_tbl %>% 
+  tab_header(
+    title = "Standardized Survey Bycatch Summary - GM2023",
+    subtitle = "n = 122")
+
+cat('\\pagebreak')
+#print(GM_tbl)
+
+SFA29_tbl <- gt(area_tables[["SFA292023"]])
+SFA29_tbl %>% 
+  tab_header(
+    title = "Standardized Survey Bycatch Summary - SFA29-2023",
+    subtitle = "n = 106")
+
+#print(SFA29_tbl)
+
+#save_as_image(area_tables[[areas[i]]], path = paste("C:/Users/GlassA/Desktop/Inshore Scallop/bycatch/species_data/tables/table_", areas[i],".png"))
+
+
+```
+```{r line plots, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+####2. create std_abundance by species by year. 
+## sum of total std count per year by species, and line plot
+
+species_data_by_year = list()
+
+for(i in 1:length(species)) {
+  species_data_by_year[[species[i]]]<-species_data[[species[i]]]%>% 
+    dplyr::filter(year > 1989) %>% 
+    group_by(COMMON, year) %>% 
+    dplyr::mutate(Total_Num_per_Year = (round(sum(abun_std)))) %>% 
+    dplyr::select (year, COMMON, Total_Num_per_Year) %>% 
+    drop_na() %>% 
+    unique()
+ # write.csv(species_data_by_year[[species[i]]], file=paste0("species_data/by_year_ ", species[i],".csv"), row.names = FALSE)
+}
+
+new_row_2020 <- data.frame(
+  year = 2020,  
+  COMMON = NA,
+  Total_Num_per_Year = NA
+    #Add other columns as needed with NA values
+  )
+
+for(i in 1:length(species_all)) { 
+species_data_by_year[[species_all[i]]]<-
+     rbind(species_data_by_year[[species_all[i]]],new_row_2020)
+}
+
+species_plots_year = list()
+for(i in 1:length(species)) {
+  species_plots_year[[species[i]]]<-species_data_by_year[[species[i]]]%>% 
+    ggplot()+ 
+    ggtitle(species[i])+
+    geom_point(aes(year, Total_Num_per_Year)) + 
+    geom_line(aes(year, Total_Num_per_Year))+
+    scale_x_continuous()+ 
+    scale_y_continuous()+
+    labs(y= "Total standardized number", x = "Year")
+  #update save location  
+  #ggsave(species_plots_year[[species[i]]], file=paste0("/plots/plot_by_year_", species[i],".png"), width = 44.45, height = 27.78, units = "cm", dpi=300)
+    
+}
+
+
+```
+\newpage
+```{r histograms, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+####3. create histograms of size by year
+species_hist = list()
+for(i in 1:length(species)) { 
+  species_hist[[species[i]]] <- bycatch %>% 
+  dplyr::filter(COMMON == species[i]) %>% 
+    ggplot(aes(x = MEAS_VAL))+
+    ggtitle(species[i])+
+    geom_histogram(bins=40)+facet_wrap(.~year)+
+    labs(x ='Measured Value', y='Count')
+ #ggsave(species_hist[[species[i]]], file=paste0("/plots/hist_", species[i],".png"), width = 44.45, height = 27.78, units = "cm", dpi=300)
+}
+```
+
+```{r maps, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+##5. create data set and plot of abundance location maps for current year surveys
+###############################################################################################
+#writes the most recent survey data sets 
+####use this output to make maps
+species_data_max_year = list()
+for(i in 1:length(species)) { 
+  species_data_max_year[[species[i]]] <- bycatch_by_tow %>% 
+    dplyr::filter(COMMON == species[i]) %>% 
+    right_join(y= tows, by = c("TOW_SEQ", "year", "CRUISE", "TOW_NO")) %>% 
+    replace_NA( value = 0, cols = c("abun_raw", "abun_std"), set = FALSE) %>% 
+    #mutate(across(where(is.numeric), ~ replace_na(.x, 0))) %>% #Assumes all NAs are 0
+    mutate(num_std = round(abun_std)) %>% 
+    dplyr::filter(year == myr)
+  #write.csv(species_data_max_year[[species[i]]], file=paste0("max_year_data", species[i],".csv"), row.names = FALSE)
+}
+#### SETTING UP FOR LOOP FOR MAPS####
+
+#p<- pecjector(repo ='github',c_sys="ll", gis.repo = 'D:/Github/GIS_layers', plot=F,plot_as = 'ggplot',
+#              add_layer = list(land = "grey", scale.bar = c('bl',0.5,-1,-1)))
+
+#pecjector(repo ='github',c_sys="ll", gis.repo = 'github', plot=F,plot_as = 'ggplot',
+#              add_layer = list(land = "grey", scale.bar = c('bl',0.5,-1,-1)))
+
+#define for plotting ****MAY NEED TO ADJUST INTERVALS****
+#Set legend format for species maps for current year
+# set to max Little/Winter skate as it currently has the highest numbers
+
+#lvls <- c(0,.60,5,15,20,40,max(species_data_max_year[["LITTLE/WINTER SKATE <35cm"]]$num_std))
+#labels <- c("0","1-5","6-15","16-20","21-40", paste0("41+",max(species_data_max_year[["LITTLE/WINTER SKATE <35cm"]]$num_std)))
+lvls <- c(0,.60,5,15,30,60,100,150, 200, max(species_data_max_year[["AMERICAN LOBSTER"]]$num_std))
+labels <- c("0","1-5","6-15","16-30","31-60", "61-100", "101-150", "151-200", paste0("201-",max(species_data_max_year[["LITTLE/WINTER SKATE <35cm"]]$num_std)))
+
+#data set up to include breaks for maps 
+for(i in 1:length(species)) {  
+  species_data_max_year[[species[i]]]<- (species_data_max_year[[species[i]]])%>% 
+    mutate(brk = cut(num_std, breaks = lvls, labels = labels, include.lowest = TRUE))
+}
+
+#get world map from natural earth data 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world <- world[world$subregion == "Northern America",]
+ 
+ 
+species_maps = list()
+for(i in 1:length(species)) {
+species_maps[[species[i]]]<- ggplot(data = world) +
+geom_sf() +  
+  geom_spatial_point(data = species_data_max_year[[species[i]]], aes(SLONG, SLAT, size = brk, shape = brk)) +
+    scale_shape_manual("Number per Tow",values = c(4, 19, 19, 19,19), labels = labels)+ #Formatting the shape
+    scale_size_manual("Number per Tow", values = c(2, 2, 4, 6, 8), labels = labels)+
+    # Formatting the size for each break
+    ggtitle(paste0(species[i],sep = " - ", myr))+
+    labs(x = "Longitude",y = "Latitude") +
+    coord_sf(xlim = c(-67.25,-64), ylim = c(43,45.75), expand = FALSE) +
+    theme(legend.key.size = unit(6,"mm"),
+          plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
+          axis.title = element_text(size = 10),
+          axis.text = element_text(size = 10),
+          legend.title = element_text(size = 9, face = "bold"), 
+          legend.text = element_text(size = 9),
+          legend.position = c(.85,.25), #legend position
+          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)),
+          legend.box.margin = margin(2, 1, 1, 1),
+          panel.border = element_rect(colour = "black", fill=NA, size=1)) + theme_bw()
+  # ggsave(species_maps[[species[i]]], file=paste0("/maps/max_year_map_", species[i],".png"), width = 44.45, height = 27.78, units = "cm", dpi=300)
+}
+
+
+
+#for(i in 1:length(species)) {
+#  species_maps[[species[i]]]<-p + #Plot survey data and format figure.
+#    geom_spatial_point(data = species_data_max_year[[species[i]]], aes(SLONG, SLAT, size = brk, shape = brk)) +
+#    scale_shape_manual("Number per Tow",values = c(4, 19, 19, 19,19), labels = labels)+ #Formatting the shape
+#    scale_size_manual("Number per Tow", values = c(2, 2, 4, 6, 8), labels = labels)+
+    # Formatting the size for each break
+#    ggtitle(paste0(species[i],sep = " - ", myr))+
+#    labs(x = "Longitude",y = "Latitude") +
+#    coord_sf(xlim = c(-67.25,-64), ylim = c(43,45.75), expand = FALSE) +
+#    theme(legend.key.size = unit(6,"mm"),
+#          plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
+#          axis.title = element_text(size = 10),
+#          axis.text = element_text(size = 10),
+#          legend.title = element_text(size = 9, face = "bold"), 
+#          legend.text = element_text(size = 9),
+#          legend.position = c(.85,.25), #legend position
+#          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)),
+#          legend.box.margin = margin(2, 1, 1, 1),
+#          panel.border = element_rect(colour = "black", fill=NA, size=1))
+  # ggsave(species_maps[[species[i]]], file=paste0("/maps/max_year_map_", species[i],".png"), width = 44.45, height = 27.78, units = "cm", dpi=300)
+#}
+
+```
+\newpage
+# Species Summaries
+```{r Figures, include=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 12, fig.height= 14, results='asis'}
+
+for(i in 1:length(species)) { 
+grid.arrange(species_plots_year[[species[i]]], species_hist[[species[i]]], ncol = 1)
+cat("\n\n\\pagebreak\n")
+print(species_maps[[species[i]]], scale = 5, width = 30, height = 30, dpi = 300, units = "cm")
+
+}
+```
+
