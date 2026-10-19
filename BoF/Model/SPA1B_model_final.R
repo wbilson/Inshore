@@ -81,7 +81,7 @@ USR <- 1800
 # Set the value for catch next year, this is used in SSModel.plot.median() after the model runs 
 # This value should be the interim TAC in the area.
 
-catch.next.year <- 78 #Interims were set Sept 29, 2026
+catch.next.year <- 154 #Interims were set Sept 29, 2026 (78t FB, 18t FSC and 58t calculated from the sharing formula forSPA1B)
  
 #required packages
 #library(SSModel)#v 1.0-3
@@ -157,7 +157,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 #parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep","IRrep")
 
 # Bring in the data, you will need to update this with the latest numbers!
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1B_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13) 
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1B_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel", cols=1:13) 
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
 

@@ -131,7 +131,7 @@ CreateExcelModelFile(direct = direct,
 
 # Let's be consistent with our MCMC year over year unless there is a need to change it...
 niter = 250000 # default = 100000
-nchains = 5    # default =3  #Had to change to get > 400 min.neff
+nchains = 3    # default =3  
 nburnin = 50000  # default = 50000
 nthin = 10       # default = 10
 
@@ -140,7 +140,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 #parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep","IRrep")
 
 # Bring in the data, you will need to update this with the latest numbers!
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1A_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel",cols=1:13)
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA1A_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel",cols=1:13)
 
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
@@ -178,8 +178,7 @@ SPA1A.inits <- function(NY)
 # ---- Run the model ----
 
 Spa1A.model <- SSModel(SPA1A.dat,BoFSPA4.priors,SPA1A.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
-                       nchains=5,niter=250000,nburnin=50000,nthin=10) #,debug=T, Have to hardcode these parameters, for parallel processing to work.
-#increased nchains from 3 to 4.
+                       nchains=3,niter=250000,nburnin=50000,nthin=10) #,debug=T, Have to hardcode these parameters, for parallel processing to work.
 
 #Spa1A.model <- SSModel(SPA1A.dat,BoFSPA4.priors,SPA1A.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
                    # nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T)

@@ -78,7 +78,7 @@ area <- 6  #this would be the SPA, for entries options are to use: 1A, 1B, 3, 4,
 
 
 # Set the value for catch next year, assume same catch removals as current year, this is used in SSModel.plot.median() after the model runs; note no interim used for SPA 6 fishery 
-catch.next.year <- 71 #0.55*129.29 = 
+catch.next.year <- 39 #0.54*71.3 = 38.5
 
 #reference points - **NEW BIOMASS ref pts for SPA 6**
 #Set reference points 
@@ -157,7 +157,7 @@ CreateExcelModelFile(direct = direct,
 
 # Let's be consistent with our MCMC!
 niter = 400000
-nchains = 4 #3
+nchains = 3 #3
 nburnin = 200000
 nthin = 10
 
@@ -168,7 +168,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 
 # Read in the data...  Note that in 2018 SPA6 is the one area which wasn't updated with the new _R Data file system as some work remains to get 
 # all the data organized
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear, "/Assessment/Data/Model/SPA",area,"/SPA6_ModelData_R_2026-09-16.xlsx"),sheet = "AlignedForModel",
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear, "/Assessment/Data/Model/SPA",area,"/SPA6_ModelData_R_2026-10-19.xlsx"),sheet = "AlignedForModel",
                      cols=1:13)
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
@@ -201,7 +201,7 @@ BoFSPA6.priors <- BoFSPA4.priors
 
 #Test with RJAGS
 Spa6.model <- SSModel(SPA6.dat,BoFSPA6.priors,SPA6.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
-                      nchains=4,niter=400000,nburnin=200000,nthin=10) #,debug=T
+                      nchains=3,niter=400000,nburnin=200000,nthin=10) #,debug=T
 
 #Spa6.model <- SSModel(SPA6.dat,BoFSPA6.priors,SPA6.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm,
                      #nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T) #increased inter and used higher thin to combat autocorrelation (as evidenced by low n.eff)
@@ -561,6 +561,6 @@ I.N.plot <- ggplot(data = raw.dat, aes (x = YearSurvey)) +
   xlab("Year")
 I.N.plot
 
-png(paste0(direct,"/",assessmentyear,"/Assessment/Figures/Model/SPA6/SPA4_population_number_index",surveyyear,".png"), type="cairo", width=20, height=15, units = "cm", res=300)
+png(paste0(direct,"/",assessmentyear,"/Assessment/Figures/Model/SPA6/SPA6_population_number_index",surveyyear,".png"), type="cairo", width=20, height=15, units = "cm", res=300)
 I.N.plot
 dev.off() 

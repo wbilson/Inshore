@@ -142,7 +142,7 @@ CreateExcelModelFile(direct = direct,
 
 # Let's be consistent with our MCMC year over year unless there is a need to change it...
 niter = 400000 # default = 100000
-nchains = 8    # default =33
+nchains = 6    # default =3
 nburnin = 200000  # default = 50000
 nthin = 10       # default = 10
 
@@ -153,7 +153,7 @@ parm = c("B","R","q","K","P","sigma","S","m","kappa.tau","r", "Fmort","mu","Irep
 
 
 # Bring in the data, you will need to update this with the latest numbers!
-raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA3_ModelData_R_2026-09-15.xlsx"),sheet = "AlignedForModel",cols=1:13)
+raw.dat <- read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/Model/SPA",area,"/SPA3_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel",cols=1:13)
 str(raw.dat)
 raw.dat$C <- as.numeric(raw.dat$C)
 raw.dat
@@ -190,7 +190,7 @@ SPA3.inits <- function(NY)
 }
 
 # ---- Run the model ----
-Spa3.model <- SSModel(SPA3.dat,BoFSPA4.priors,SPA3.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm, nchains=8,niter=400000,nburnin=200000,nthin=10)#,debug=T
+Spa3.model <- SSModel(SPA3.dat,BoFSPA4.priors,SPA3.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm, nchains=6,niter=400000,nburnin=200000,nthin=10)#,debug=T
 
 
 #Spa3.model <- SSModel(SPA3.dat,BoFSPA4.priors,SPA3.inits(NY),model.file=BoFmodel,Years=yrs, parms = parm, nchains=nchains,niter=niter,nburnin=nburnin,nthin=nthin,debug=T)
