@@ -32,8 +32,8 @@ options(stringsAsFactors = FALSE)
 # ///.... DEFINE THESE ENTRIES ....////
 
 #DEFINE: year, area
-year <- 2025  #this is the survey year
-assessmentyear <- 2026 #this is the year you are running your assessment in -- corresponds to the assessment folder year name 
+year <- 2026  #this is the survey year
+assessmentyear <- 2027 #this is the year you are running your assessment in -- corresponds to the assessment folder year name 
 # DEFINE path for figures and dataouput to be saved; note expects within this folder that you've created a "dataoutput" and "Figures" folder under the following directory path;  MUST HAVE "/" at the end of your path! (shouldn't have to change this in most years with new folder structure)
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
 #path.directory <- "Y:/Inshore/SFA29/"

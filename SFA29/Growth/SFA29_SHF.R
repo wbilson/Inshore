@@ -23,7 +23,7 @@ library(PEDstrata)
 library(tidyverse)
 
 #setwd temporarily to grab these data...
-setwd('Y:/Inshore/Assesment/BoF/Assessment_fns/SFA29W')
+setwd('Y:/Inshore/Assessment/BoF/Assessment_fns/SFA29W')
 source('Geophysicalareas.R')
 source('SedimentareasSFA29.R')
 source('Domainestimates.R')
@@ -39,18 +39,18 @@ names(surf.all) <- c("uid","Start.Bottom")
 
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 #uid <- un.englishg
 #pwd <- pw.englishg
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - note should match year of cruise below 
-cruise <- "SFA292025"  #note should match year for surveyyear set above 
-assessmentyear <- 2026 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - note should match year of cruise below 
+cruise <- "SFA292026"  #note should match year for surveyyear set above 
+assessmentyear <- 2027 #year in which you are conducting the survey 
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
-years <- c(2001:2025) 
+years <- c(2001:2026) 
 
 #Bring in survey tow data with SDM value (note - SFA29_SDM_LWM.R script must be run to get updated survey tows with SDM values prior to running this script)
 sdmtows <- read.csv("Y:/Inshore/Assessment/SFA29/ScalSurv_SDM/SFA29Tows_SDM.csv")

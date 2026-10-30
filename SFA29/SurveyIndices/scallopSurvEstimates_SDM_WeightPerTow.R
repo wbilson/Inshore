@@ -33,14 +33,14 @@ surf.all <- surf.all[,c("uid","surf")]
 names(surf.all) <- c("uid","Start.Bottom")
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - not should match year of cruise below 
-cruise <- "SFA292025"  #note should match year for surveyyear set above 
-assessmentyear <- 2026 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - not should match year of cruise below 
+cruise <- "SFA292026"  #note should match year for surveyyear set above 
+assessmentyear <- 2027 #year in which you are conducting the survey 
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
 years <- c(2001:surveyyear) #when have 2021 data ready with SDM value then can use line of code below 
 #yr.crnt <- surveyyear-1
@@ -773,6 +773,15 @@ ggsave(filename = paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA2
 
 
 ### --- stratified estimate since 2014 ----- 
+
+LTM.comm <-  sdm.strat.est %>% filter(size == "comm" & YEAR < surveyyear) %>% group_by(SUBAREA) %>% summarise(LTM = median(yst , na.rm = TRUE  )) %>% 
+  mutate(SUBAREA = case_when(SUBAREA == "SFA29A" ~ "Subarea A",
+                             SUBAREA == "SFA29B" ~ "Subarea B",
+                             SUBAREA == "SFA29C" ~ "Subarea C",
+                             SUBAREA == "SFA29D" ~ "Subarea D"))
+
+LTM.comm
+
 unique(sdm.levels.2001toYYYY$Strata)
 
 #For plots - removing 2020 values
@@ -787,11 +796,12 @@ sdm.strat.est <- sdm.strat.est %>%
 strat.comm.plot <- ggplot(data = sdm.strat.est %>% filter(size == "comm"), aes(x=YEAR, y=Mean)) + 
   geom_point() + 
   geom_line() + 
-  geom_errorbar( aes(x=YEAR, ymin=yst-se, ymax=yst+se), width=0.4, colour="orange", alpha=0.9, size=1.3) + 
+  geom_errorbar( aes(x=YEAR, ymin=yst-se, ymax=yst+se), width=0.2, colour="orange", alpha=0.9, size=0.5) + 
+  geom_hline(data = LTM.comm, aes(yintercept=LTM), col = "blue", linetype = "dashed")+
   facet_wrap(~SUBAREA, ncol=2) + 
   theme_bw() + ylab("Mean weight/tow (kg)") + xlab("Year") + 
   theme(legend.position = c(0.1, 0.85),panel.grid.minor = element_blank(),legend.title = element_blank()) + 
-  scale_x_continuous(breaks = seq(2001,2026,by=4), limits = c(2001,2026)) #+ 
+  scale_x_continuous(breaks = seq(2001,2026,by=4), limits = c(2001,2026))
 strat.comm.plot
 
 #save

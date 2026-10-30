@@ -18,12 +18,12 @@ require(tidyverse)
 options(stringsAsFactors = FALSE)
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
 #uid <- un.raperj
 #pwd <- un.raperj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
 
 # ---Import Source functions ----------------------------------------------------------------------
@@ -50,8 +50,8 @@ sdm <- raster("Y:/Inshore/Databases/Scallsur/SFA29BottomTypes/SDM/sdm_sfa29/w001
 chan <- dbConnect(dbDriver("Oracle"),username=uid, password=pwd,'ptran')
 
 #set survey.year and cruise - *Note: requires single quotations within double quotations*
-survey.year <- "'2025'"
-cruise <- "'SFA292025'"
+survey.year <- "'2026'"
+cruise <- "'SFA292026'"
 
 #Db Query:
 quer2 <- paste(
@@ -154,7 +154,7 @@ p + geom_boxplot()+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 #Plot to check any tows if needed
-check <- ScallopSurv.sf %>% filter(TOW_NO == 51)
+check <- ScallopSurv.sf %>% filter(TOW_NO == 40)
 mapview::mapview(check)+ #Change TOW_NO
   mapview::mapview(sdm)
 

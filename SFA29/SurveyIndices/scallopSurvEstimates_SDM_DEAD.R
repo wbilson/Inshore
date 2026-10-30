@@ -10,8 +10,6 @@
 ## PEDstrata v 1.0.1 updated
 
 
-###NOTE:: ADD STRATIFIED CLAPPER INDEX FOR 2027####
-
 options(stringsAsFactors=FALSE)
 library(PEDstrata)
 library(lubridate)
@@ -35,14 +33,14 @@ surf.all <- surf.all[,c("uid","surf")]
 names(surf.all) <- c("uid","Start.Bottom")
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - not should match year of cruise below 
-cruise <- "SFA292025"  #note should match year for surveyyear set above 
-assessmentyear <- 2026 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - not should match year of cruise below 
+cruise <- "SFA292026"  #note should match year for surveyyear set above 
+assessmentyear <- 2027 #year in which you are conducting the survey 
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
 #path.directory <- "Y:/Inshore/SFA29/"
 years <- c(2001:surveyyear) #when have 2021 data ready with SDM value then can use line of code below 
@@ -1843,3 +1841,140 @@ data.join$prop.dead.prerec[is.na(data.join$prop.dead.prerec)] <- 0
 write.csv(data.join, paste0(path.directory, assessmentyear, "/Assessment/Data/SurveyIndices/SFA29.all.tows.2001to",surveyyear,".Proportion.Dead.csv"), row.names = FALSE)
 
 ### END ###
+
+##
+# --- Stratified estimates fo CLAPPERS - NOT REQUIRED/USED by assessement but interesting ---- 
+##
+
+#rename subareas 
+sdm.strat.est$subarea[sdm.strat.est$SUBAREA == "SFA29A"] <- "Subarea A"
+sdm.strat.est$subarea[sdm.strat.est$SUBAREA == "SFA29B"] <- "Subarea B"
+sdm.strat.est$subarea[sdm.strat.est$SUBAREA == "SFA29C"] <- "Subarea C"
+sdm.strat.est$subarea[sdm.strat.est$SUBAREA == "SFA29D"] <- "Subarea D"
+
+## remove 2020 since this is interpolated 
+sdm.strat.est$yst[sdm.strat.est$YEAR == 2020] <- NA 
+
+
+AtoD.stratified.plot <- ggplot(data = sdm.strat.est, aes(x=YEAR, y=yst,  col=size, pch=size)) + 
+  geom_point() + 
+  geom_line(aes(linetype = size)) + 
+  facet_wrap(~subarea, ncol=2) +
+  theme_bw() + ylab("Survey mean no./tow") + xlab("Year") + 
+  theme(legend.position = c(0.1, 0.85),panel.grid.minor = element_blank()) + 
+  geom_pointrange(aes(ymin=yst-se.yst, ymax=yst+se.yst)) + 
+  scale_x_continuous(breaks = seq(2001,surveyyear+1,by=4), limits = c(2001,surveyyear+1))
+# geom_ribbon(aes(ymin=out.e$yst-out.e$se.yst, ymax=out.e$yst+out.e$se.yst), 
+#             alpha=0.1,       #transparency
+#             linetype=1,      #solid, dashed or other line types
+#             colour="grey70", #border line color
+#             size=1,          #border line size
+#             fill="grey70") 
+AtoD.stratified.plot
+
+png(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.clappers.",surveyyear,".png"),width=11,height=11,units = "in",res=300)
+AtoD.stratified.plot
+dev.off()
+
+
+
+## Just pre-recruits ####
+LTM.prerec <-  sdm.strat.est %>% filter(size == "prerec" & YEAR < surveyyear) %>% group_by(subarea) %>% summarise(LTM = median(yst, na.rm = TRUE))
+LTM.prerec
+#subarea     LTM
+#<chr>     <dbl>
+#  1 Subarea A  20.1
+#2 Subarea B  35.0
+#3 Subarea C  42.6
+#4 Subarea D  69.4
+
+AtoD.stratified.plot.prerec <- ggplot(data = sdm.strat.est %>% filter(size == "prerec"), aes(x=YEAR, y=yst)) + 
+  geom_point(size = 0.25) + 
+  geom_line() + 
+  facet_wrap(~subarea, ncol=2, scales = "free") +
+  theme_bw() + 
+  ylab("Survey mean no./tow") +
+  xlab("Year") + 
+  #theme(legend.position = c(0.1, 0.85),panel.grid.minor = element_blank()) + 
+  geom_pointrange(aes(ymin=yst-se.yst, ymax=yst+se.yst)) + 
+  scale_x_continuous(breaks = seq(2001,surveyyear+1,by=4), limits = c(2001,surveyyear+1)) + 
+  geom_hline(data = LTM.prerec, aes(yintercept=LTM), col = "blue", linetype = "dashed")+
+  theme(axis.title = element_text(size = 16), strip.text = element_text(size = 12), axis.text = element_text(size = 12))
+# geom_ribbon(aes(ymin=out.e$yst-out.e$se.yst, ymax=out.e$yst+out.e$se.yst), 
+#             alpha=0.1,       #transparency
+#             linetype=1,      #solid, dashed or other line types
+#             colour="grey70", #border line color
+#             size=1,          #border line size
+#             fill="grey70") 
+AtoD.stratified.plot.prerec
+
+ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.prerecuit.clapper.numbers.",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
+
+#ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.prerecuit.numbers._wotow92",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
+
+## Just recruits ####
+LTM.rec <-  sdm.strat.est %>% filter(size == "rec" & YEAR < surveyyear) %>% group_by(subarea) %>% summarise(LTM = median(yst, na.rm = TRUE   ))
+LTM.rec
+#subarea      LTM
+#<chr>      <dbl>
+#  1 Subarea A  0.998
+#2 Subarea B  9.59 
+#3 Subarea C  7.91 
+#4 Subarea D 11.0  
+
+AtoD.stratified.plot.rec <- ggplot(data = sdm.strat.est %>% filter(size == "rec"), aes(x=YEAR, y=yst)) + 
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~subarea, ncol=2, scales = "free") +
+  theme_bw() + 
+  ylab("Survey mean no./tow") +
+  xlab("Year") + 
+  #theme(legend.position = c(0.1, 0.85),panel.grid.minor = element_blank()) + 
+  geom_pointrange(aes(ymin=yst-se.yst, ymax=yst+se.yst)) + 
+  scale_x_continuous(breaks = seq(2001,surveyyear+1,by=4), limits = c(2001,surveyyear+1)) + 
+  geom_hline(data = LTM.rec, aes(yintercept=LTM), col = "blue", linetype = "dashed")+
+  theme(axis.title = element_text(size = 16), strip.text = element_text(size = 12), axis.text = element_text(size = 12))
+# geom_ribbon(aes(ymin=out.e$yst-out.e$se.yst, ymax=out.e$yst+out.e$se.yst), 
+#             alpha=0.1,       #transparency
+#             linetype=1,      #solid, dashed or other line types
+#             colour="grey70", #border line color
+#             size=1,          #border line size
+#             fill="grey70") 
+AtoD.stratified.plot.rec
+
+ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.recuit.clapper.numbers.",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
+
+#ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.recuit.numbers.wotow92",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
+
+
+## Just commercial ####
+LTM.comm <-  sdm.strat.est %>% filter(size == "comm" & YEAR < surveyyear) %>% group_by(subarea) %>% summarise(LTM = median(yst , na.rm = TRUE  ))
+LTM.comm
+#subarea     LTM
+#<chr>     <dbl>
+#  1 Subarea A  95.7
+#2 Subarea B 130. 
+#3 Subarea C  75.3
+#4 Subarea D 119. 
+
+AtoD.stratified.plot.comm <- ggplot(data = sdm.strat.est %>% filter(size == "comm"), aes(x=YEAR, y=yst)) + 
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~subarea, ncol=2, scales = "free") +
+  theme_bw() + 
+  ylab("Survey mean no./tow") +
+  xlab("Year") + 
+  #theme(legend.position = c(0.1, 0.85),panel.grid.minor = element_blank()) + 
+  geom_pointrange(aes(ymin=yst-se.yst, ymax=yst+se.yst)) + 
+  scale_x_continuous(breaks = seq(2001,surveyyear+1,by=4), limits = c(2001,surveyyear+1)) + 
+  geom_hline(data = LTM.comm, aes(yintercept=LTM), col = "blue", linetype = "dashed")+
+  theme(axis.title = element_text(size = 16), strip.text = element_text(size = 12), axis.text = element_text(size = 12))
+# geom_ribbon(aes(ymin=out.e$yst-out.e$se.yst, ymax=out.e$yst+out.e$se.yst), 
+#             alpha=0.1,       #transparency
+#             linetype=1,      #solid, dashed or other line types
+#             colour="grey70", #border line color
+#             size=1,          #border line size
+#             fill="grey70") 
+AtoD.stratified.plot.comm
+
+ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.commercial.clapper.numbers.",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)

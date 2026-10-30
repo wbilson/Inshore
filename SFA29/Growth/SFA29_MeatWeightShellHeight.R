@@ -20,15 +20,15 @@ library (lme4)
 library(lattice)
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - not should match year of cruise below 
-cruise <- "SFA292025"  #note should match year for surveyyear set above 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - not should match year of cruise below 
+cruise <- "SFA292026"  #note should match year for surveyyear set above 
 
-assessmentyear <- 2026 #year in which you are conducting the assessment (surveyyear+1)
+assessmentyear <- 2027 #year in which you are conducting the assessment (surveyyear+1)
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
 #path.directory <- "Y:/Inshore/SFA29/"
 
@@ -267,7 +267,7 @@ write.csv(livefreq.condition.spatial, paste0(path.directory, assessmentyear, "/A
 #subarea E  -67.65107
 
 #Bring in file with depths by area, note some are by strata groups within area
-mean.depth <- read.csv('Y:/Inshore/SFA29/SFA29DepthProfile/SFA29_AreaMeanDepths.csv')[ ,c("AREA", "MeanDepth_m")] #File for the constant depth to predict on by area
+mean.depth <- read.csv('Y:/Inshore/Assessment/SFA29/SFA29DepthProfile/SFA29_AreaMeanDepths.csv')[ ,c("AREA", "MeanDepth_m")] #File for the constant depth to predict on by area
 mean.depth
 unique(mean.depth$AREA)
 length(mean.depth$AREA)

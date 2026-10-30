@@ -34,14 +34,14 @@ names(surf.all) <- c("uid","Start.Bottom")
 
 
 # Define: 
-uid <- un.sameotoj
-pwd <- pw.sameotoj
-#uid <- keyring::key_list("Oracle")[1,2]
-#pwd <- keyring::key_get("Oracle", uid)
+#uid <- un.sameotoj
+#pwd <- pw.sameotoj
+uid <- keyring::key_list("Oracle")[1,2]
+pwd <- keyring::key_get("Oracle", uid)
 
-surveyyear <- 2025  #This is the last survey year for which you want to include  - not should match year of cruise below 
-cruise <- "SFA292025"  #note should match year for surveyyear set above 
-assessmentyear <- 2026 #year in which you are conducting the survey 
+surveyyear <- 2026  #This is the last survey year for which you want to include  - not should match year of cruise below 
+cruise <- "SFA292026"  #note should match year for surveyyear set above 
+assessmentyear <- 2027 #year in which you are conducting the survey 
 path.directory <- "Y:/Inshore/Assessment/SFA29/"
 years <- c(2001:surveyyear) #when have 2021 data ready with SDM value then can use line of code below 
 #yr.crnt <- surveyyear-1
@@ -1992,7 +1992,6 @@ AtoD.stratified.plot.comm
 ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.commercial.numbers.",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
 
 #ggsave(paste0(path.directory,assessmentyear,"/Assessment/Figures/SFA29.AtoD.stratified.commercial.numbers.wotow92.",surveyyear,".png"),width=9,height=8,units = "in",dpi=300)
-
 
 
 #-- REFERENCE POINTS -proposal based off survey index of commercial numbers per tow ---- 
