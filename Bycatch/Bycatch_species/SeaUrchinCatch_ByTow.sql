@@ -1,0 +1,79 @@
+/*Select sea urchin catch by tow from the Inshore Scallop Survey*/ 
+/*Protocol to record sea urchin on survey started in 2026; note only catch green sea urchin */
+/* J.Sameoto Oct 2026 */ 
+
+SELECT x.CRUISE,
+x.TOW_NO,
+x.TOW_DATE,
+x.TOW_TYPE_ID,
+x.UTC,
+x.STRATA_ID,
+x.START_LAT,
+x.START_LONG,
+x.END_LAT,
+x.END_LONG,
+x.TOW_DIR,
+x.TOW_DIR_ID,
+x.TIDE_CYCLE_ID,
+x.TOW_LEN,
+x.TOW_LEN_ID,
+x.DEPTH,
+x.ADJ_DEPTH,
+x.BOTTOM_TEMP,
+x.BOTTOM_ID,
+x.MGT_AREA_ID,
+GEAR_TOTAL,
+BYCATCH_SEQ,
+SPECCD_ID,
+COMMON,
+SCIENTIFIC,
+MEAS_ID,
+NVL(MEAS_VAL,0) as ABUNDANCE_RAW,
+NVL(ROUND(MEAS_VAL * (800/x.TOW_LEN) * (17.5/GEAR_TOTAL),2), 0)  AS ABUNDANCE_STD
+FROM
+(SELECT *
+FROM SCTOWS
+WHERE tow_date > TO_DATE('2026-01-01','YYYY-MM-DD')) x
+ LEFT JOIN  (
+SELECT t.tow_seq,
+CRUISE,
+TOW_NO,
+TOW_DATE,
+TOW_TYPE_ID,
+UTC,
+STRATA_ID,
+START_LAT,
+START_LONG,
+END_LAT,
+END_LONG,
+TOW_DIR,
+TOW_DIR_ID,
+TIDE_CYCLE_ID,
+TOW_LEN,
+TOW_LEN_ID,
+DEPTH,
+ADJ_DEPTH,
+BOTTOM_TEMP,
+BOTTOM_ID,
+MGT_AREA_ID,
+DRAG_WIDTH,
+NUM_LINED,
+NUM_UNLINED,
+NUM_LINED_FREQ,
+NUM_UNLINED_FREQ,
+(NUM_LINED_FREQ + NUM_UNLINED_FREQ)* DRAG_WIDTH AS GEAR_TOTAL,
+BYCATCH_SEQ,
+b.SPECCD_ID,
+COMMON,
+SCIENTIFIC,
+SEX_ID,
+MEAS_ID,
+MEAS_VAL
+FROM SCTOWS t, SCBYCATCHES b, scspeciescodes s
+     WHERE     t.tow_seq = b.tow_seq
+           AND b.speccd_id = 6400 -- sea urchin STRONGYLOCENTROTUS SP.
+           --  AND meas_id = 6
+           AND b.speccd_id = s.speccd_id
+ )  y
+ ON x.tow_seq = y.tow_seq 
+ order by CRUISE, TOW_NO
