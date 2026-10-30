@@ -13,7 +13,7 @@ library(gridtext)
 #install.packages("xfun")
 library(xfun)
 
-assessmentyear <- 2025
+assessmentyear <- 2026
 
 direct <- "Y:/Inshore/Assessment/BoF/"
 
@@ -470,26 +470,26 @@ ggsave(file=paste0(direct,assessmentyear,"/Assessment/Figures/ConditionNumberWei
 
 ##### change in condition as percent #####
 
-YR <- 2025
+YR <- 2026
 
 ## 1A
 con.yr.t <- condition.1A[condition.1A$YEAR == YR,]
 con.yr.tminus1 <- condition.1A[condition.1A$YEAR == YR-1,]
 ((con.yr.tminus1$CONDITION - con.yr.t$CONDITION) / (con.yr.tminus1$CONDITION))*100
-#11.82144
+# -5.6974
 
 
 ## 1B
 con.yr.t <- condition.1B[condition.1B$YEAR == YR,]
 con.yr.tminus1 <- condition.1B[condition.1B$YEAR == YR-1,]
 ((con.yr.tminus1$CONDITION - con.yr.t$CONDITION) / (con.yr.tminus1$CONDITION))*100
-# 6.575124
+#  -12.9719
 
 ## 3 
 con.yr.t <- condition.3[condition.3$YEAR == YR,]
 con.yr.tminus1 <- condition.3[condition.3$YEAR == YR-1,]
 ((con.yr.tminus1$CONDITION - con.yr.t$CONDITION) / (con.yr.tminus1$CONDITION))*100
-# 4.288165
+# -1.154918
 
 ## 4 
 con.yr.t <- condition.4[condition.4$YEAR == YR,]

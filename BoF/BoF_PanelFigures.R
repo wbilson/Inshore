@@ -24,8 +24,22 @@ showtext_auto()
 #require(rosettafish) || stop("Install the rosettafish package please: remotes::install_github('freyakeyser/rosettafish')")
 #require(RCurl) || stop("Install the RCurl package please: install.packages('RCurl')")
 #rosetta_terms_SABHU <- read.csv("https://raw.githubusercontent.com/mar-scal/rosetta_shell/master/terms.csv", fileEncoding = "UTF-8")
-source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
+
+#### Import Mar-scal functions 
+funcs <- c(#"https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R",
+  "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r"
+  #"https://raw.githubusercontent.com/Mar-scal/Inshore/master/contour.gen.r"
+) 
+
+dir <- getwd()
+for(fun in funcs) 
+{
+  temp <- dir
+  download.file(fun,destfile = basename(fun))
+  source(paste0(dir,"/",basename(fun)))
+  file.remove(paste0(dir,"/",basename(fun)))
+}
+
 
 # Everything you should review/may need to change or update is listed between this point and "Summary Data:"
 
@@ -33,9 +47,9 @@ source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
 cred.lim = 0.05
 # there's a lot of 'year' objects... maintaining them for compatability with old codes
 # (THEY SHOULD ALWAYS BE THE SAME YEAR)
-year <- 2025 # similar to fishing/assessment year but used in setting up directories - could be swapped out at some point,
-fishingyear <- 2025 # most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 # year of model data to use
+year <- 2026 # similar to fishing/assessment year but used in setting up directories - could be swapped out at some point,
+fishingyear <- 2026 # most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 # year of model data to use
 
 # Sources
 direct <- paste0("Y:/Inshore/Assessment/BoF/")

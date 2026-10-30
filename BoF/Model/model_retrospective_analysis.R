@@ -32,6 +32,15 @@ if(dir.area == "SPA6") {
 
 #Load model summaries and format for plotting
 
+#2026
+sum.2026 <- read.csv(paste0(dir, "2026/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
+sum.2026$Year <- 2026
+sum.2026 <- sum.2026 %>% 
+  filter(str_detect(X, "B")) %>% 
+  mutate(X = parse_number(X)) %>%
+  arrange(X)
+sum.2026$X <- c((start.yr+1):(start.yr+nrow(sum.2026)))
+
 #2025
 sum.2025 <- read.csv(paste0(dir, "2025/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
 sum.2025$Year <- 2025
@@ -95,7 +104,7 @@ sum.2021$X <- c((start.yr+1):(start.yr+nrow(sum.2021)))
 #  arrange(X)
 #sum.2018$X <- c((start.yr+1):(start.yr+nrow(sum.2018)))
 
-mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025) #sum.2018, sum.2020, 
+mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025, sum.2026) #sum.2018, sum.2020, 
 mod.sum$Year <- as.factor(mod.sum$Year)
 
 #Plots
@@ -110,6 +119,18 @@ ggplot(data = mod.sum, aes(x = X, y = X50., colour = Year, group = Year))+
 # Median Recruit Biomass estimates (R) -----------------------------------------------
 
 #Load model summaries and format for plotting
+
+#2026
+sum.2026 <- read.csv(paste0(dir, "2026/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
+sum.2026$Year <- 2026
+sum.2026 <- sum.2026 %>% 
+  filter(str_detect(X,"R")) %>% 
+  filter(!str_detect(X,"IRrep")) %>% 
+  filter(!str_detect(X,"IRresid")) %>%
+  filter(!str_detect(X,"sIRresid")) %>%
+  mutate(X = parse_number(X)) %>%
+  arrange(X)
+sum.2026$X <- c((start.yr+1):(start.yr+nrow(sum.2026)))
 
 #2025
 sum.2025 <- read.csv(paste0(dir, "2025/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
@@ -195,7 +216,7 @@ sum.2021$X <- c((start.yr+1):(start.yr+nrow(sum.2021)))
 #  arrange(X)
 #sum.2018$X <- c((start.yr+1):(start.yr+nrow(sum.2018)))
 
-mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025)#sum.2018, sum.2020, 
+mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025, sum.2026)#sum.2018, sum.2020, 
 mod.sum$Year <- as.factor(mod.sum$Year)
 
 #Plots
@@ -212,6 +233,15 @@ ggplot(data = mod.sum, aes(x = X, y = X50., colour = Year, group = Year))+
 
 #Load model summaries and format for plotting
 
+#2026
+sum.2026 <- read.csv(paste0(dir, "2026/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
+sum.2026$Year <- 2026
+sum.2026 <- sum.2026 %>% 
+  filter(str_detect(X, "mu")) %>% 
+  mutate(X = parse_number(X)) %>%
+  arrange(X)
+sum.2026$X <- c((start.yr+1):(start.yr+nrow(sum.2026)))
+
 #2025
 sum.2025 <- read.csv(paste0(dir, "2025/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
 sum.2025$Year <- 2025
@@ -277,7 +307,7 @@ sum.2021$X <- c((start.yr+1):(start.yr+nrow(sum.2021)))
 
 #Plots
 
-mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025)#sum.2018, sum.2020, 
+mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025, sum.2026)#sum.2018, sum.2020, 
 mod.sum$Year <- as.factor(mod.sum$Year)
 ggplot(data = mod.sum, aes(x = X, y = X50., colour = Year, group = Year))+
   geom_ribbon(aes(ymin=X2.5., ymax=X97.5., fill = Year, color = Year, linetype = Year),alpha=0.2, linewidth = 0.1)+
@@ -296,6 +326,16 @@ ggplot(data = mod.sum, aes(x = X, y = X50., colour = Year, group = Year))+
 # Median mortality (m) -----------------------------------------------
 
 #Load model summaries and format for plotting
+
+#2026
+sum.2026 <- read.csv(paste0(dir, "2026/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
+sum.2026$Year <- 2026
+sum.2026 <- sum.2026 %>% 
+  filter(str_detect(X, "^m")) %>%
+  filter(!str_detect(X, "mu")) %>%
+  mutate(X = parse_number(X)) %>%
+  arrange(X)
+sum.2026$X <- c((start.yr+1):(start.yr+nrow(sum.2026)))
 
 #2025
 sum.2025 <- read.csv(paste0(dir, "2025/Assessment/Data/Model/",dir.area,"/",file.area,"ModelOutput.csv"), header=T)
@@ -369,7 +409,7 @@ sum.2021$X <- c((start.yr+1):(start.yr+nrow(sum.2021)))
 
 #Plots
 
-mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025)#sum.2018, sum.2020, 
+mod.sum <- rbind(sum.2021, sum.2022, sum.2023, sum.2024, sum.2025, sum.2026)#sum.2018, sum.2020, 
 mod.sum$Year <- as.factor(mod.sum$Year)
 ggplot(data = mod.sum, aes(x = X, y = X50., colour = Year, group = Year))+
   geom_ribbon(aes(ymin=X2.5., ymax=X97.5., fill = Year, color = Year, linetype = Year),alpha=0.2, linewidth = 0.1)+

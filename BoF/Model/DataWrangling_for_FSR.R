@@ -11,12 +11,37 @@ assessment.year <- 2026
 
 direct <- "Y:/Inshore/Assessment/BoF/"
 
+#CHECK ON PROB ABOVE USR/LRP:
+#1A
+load(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/Model_results_and_diagnostics_2026_1A.RData"))
+prob.above.USR
+prob.above.LRP
+
+#1B
+load(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/Model_results_and_diagnostics_2026_1B.RData"))
+prob.above.USR
+prob.above.LRP
+
+#3
+load(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/Model_results_and_diagnostics_2026_3.RData"))
+prob.above.USR
+prob.above.LRP
+
+#4
+load(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/Model_results_and_diagnostics_2026_4.RData"))
+prob.above.USR
+prob.above.LRP
+
+#6
+load(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/Model_results_and_diagnostics_2026_6.RData"))
+prob.above.USR
+prob.above.LRP
 
 #PROPORTIONAL NATRUAL MORTALITY -------------------------
 
 #SPA1A---------------------------
 
-    modfile.1A <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/SPA1A_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13) #CHECK FILE NAME
+    modfile.1A <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/SPA1A_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel", cols=1:13) #CHECK FILE NAME
     mod.sum.1A <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1A/Spa1AModelOutput.csv"))
     
     colnames(mod.sum.1A) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
@@ -36,7 +61,7 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
 #SPA1B---------------------------   
   
-    modfile.1B <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/SPA1B_ModelData_R_2026-09-11.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    modfile.1B <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/SPA1B_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
     mod.sum.1B <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA1B/Spa1BModelOutput.csv"))
   
     colnames(mod.sum.1B) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
@@ -56,7 +81,7 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
   #SPA3---------------------------      
     
-    modfile.3 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/SPA3_ModelData_R_2026-09-15.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    modfile.3 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/SPA3_ModelData_R_2026-10-16.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
     mod.sum.3 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA3/Spa3ModelOutput.csv"))
     
     colnames(mod.sum.3) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
@@ -76,7 +101,7 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
   #SPA4--------------------------- 
     
-    modfile.4 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/SPA4_ModelData_R_2026-09-15.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    modfile.4 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/SPA4_ModelData_R_2026-10-19.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
     mod.sum.4 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA4/Spa4ModelOutput.csv"))
     
     colnames(mod.sum.4) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
@@ -96,7 +121,7 @@ direct <- "Y:/Inshore/Assessment/BoF/"
     
 #SPA6---------------------------  
 
-    modfile.6 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/SPA6_ModelData_R_2026-09-16.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
+    modfile.6 <- read.xlsx(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/SPA6_ModelData_R_2026-10-19.xlsx"),sheet = "AlignedForModel", cols=1:13)#CHECK FILE NAME
     mod.sum.6 <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/Model/SPA6/Spa6ModelOutput.csv"))
   
     colnames(mod.sum.6) <- c("vars", "mean", "sd", "2.5%", "25%", "median", "75%", "97.5%", "Rhat", "n.eff")
@@ -192,7 +217,7 @@ write.csv(all.mu, paste0(direct,assessment.year,"/Assessment/Data/Model/BoF_Expl
 
 ###############################################################################################################################################################
 
-##### change in condition as percent #####
+##### Condition #####
 
 condition.1A <- read.csv(paste0(direct,assessment.year,"/Assessment/Data/SurveyIndices/SPA1A1B4and5/BoF_ConditionTimeSeries.csv"))
 

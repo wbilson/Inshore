@@ -449,7 +449,7 @@ write.csv(pred.1yr.boxplot$B.next, paste0(direct,"/",assessmentyear,"/Assessment
 #Finally here we have the decsion table.  This plots the decision table for all catch rates between 0 and 500 increments of 10 tonnes of catch (seq(0,500,10)).
 # Note that Feb 2020 DK noted that the incorrect LRP and USR were entered here (used SPA4s), checked against existing decision table and it made
 # no difference in our probabilities luckily, but I did update the decision table based on these correct values.
-decision <- predict(mod.res, Catch=c(seq(0,350,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
+decision <- predict(mod.res, Catch=c(seq(0,350,20)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
 decision.table<-SSModel_predict_summary_median(decision, LRP=LRP, USR=USR, RRP=0.15)
 # decision.table<-SSModel_predict_summary_median(decision, LRP=880, USR=1800, RRP=0.12)
 decision.table

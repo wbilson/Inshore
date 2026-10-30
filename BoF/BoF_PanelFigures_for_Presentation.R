@@ -33,9 +33,9 @@ source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
 cred.lim = 0.05
 # there's a lot of 'year' objects... maintaining them for compatability with old codes
 # (THEY SHOULD ALWAYS BE THE SAME YEAR)
-year <- 2025 # similar to fishing/assessment year but used in setting up directories - could be swapped out at some point,
-fishingyear <- 2025 # most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 # year of model data to use
+year <- 2026 # similar to fishing/assessment year but used in setting up directories - could be swapped out at some point,
+fishingyear <- 2026 # most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 # year of model data to use
 
 # Sources
 direct <- paste0("Y:/Inshore/Assessment/BoF/")
@@ -92,7 +92,7 @@ x_years <- list(
 # Specify the SPA you want to create figures for:
 
 # User input: either one of "1A", "1B", "3", "4", "6", or "all"
-area_input <- "4"#"all"
+area_input <- "all"#"all"
 
 # List of valid areas
 area_list <- c("1A", "1B", "3", "4", "6")

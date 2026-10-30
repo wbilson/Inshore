@@ -447,7 +447,7 @@ write.csv(pred.1yr.boxplot$B.next, paste0(direct,"/",assessmentyear,"/Assessment
 
 # --- Decision Tables ----
 #Finally here we have the decision table.  This plots the decision table for all catch rates between 0 and 500 increments of 10 tonnes of catch (seq(0,500,10)).
-decision <- predict(mod.res, Catch=c(seq(0,275,25)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
+decision <- predict(mod.res, Catch=c(seq(0,200,15)), g.parm=mod.res$data$g[mod.res$data$NY],gr.parm=mod.res$data$gR[mod.res$data$NY])
 decision.table <- SSModel_predict_summary_median(decision, LRP=LRP, USR=USR, RRP=0.15)
 decision.table
 
