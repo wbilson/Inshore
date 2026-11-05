@@ -30,7 +30,6 @@
 # update SPA3_TACandLandings_YYYY.xlsx with TAC and landings from monitoring report and save in the current assessment folder: Y:\INSHORE SCALLOP\BoF\YYYY\Assessment\Data\CommercialData
 # ensure date format in your SQL Developer profile is set to YYYY-MM-DD
 
-options(stringsAsFactors=FALSE)
 library(ROracle)
 library(ggplot2)
 library(RColorBrewer)
@@ -41,24 +40,21 @@ library(sf)
 library(dplyr)
 library(lubridate)
 
-source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
-
 
 #### DEFINE ####
 
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-fishingyear <- 2025 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 #year in which you are conducting the assessment
+fishingyear <- 2026 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 #year in which you are conducting the assessment
 un.ID=Sys.getenv("un.raperj") #ptran username
 pwd.ID=Sys.getenv("pw.raperj") #ptran password
 #un.ID=un.sameotoj #ptran username
 #pwd.ID=pw.sameotoj#ptran password
 
 #Date range for logs to be selected 
-start.date.logs <- "2024-10-01"  #YYYY-MM-DD use Oct 1 
-ends.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+start.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+ends.date.logs <- "2026-10-01"  #YYYY-MM-DD use Oct 1 
 
 
 #### Read files ####
@@ -75,19 +71,18 @@ CPUE_spa3_combined <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment
 BILU.poly<-read.csv("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/csv_NAD83/BILUpoly.csv")
 
 #Polygons for spatial plots
-poly.sf <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
-#poly.sf <- st_read("Y:/Inshore/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
+poly.sf <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA3_polygon_NAD83")
 poly.VMS <- st_read("Y:/Inshore/Databases/Scallsur/SPA3", layer = "SPA3_VMS_StrataBrierLurcher")
-#poly.VMS <- st_read("Y:/Inshore/Databases/Scallsur/SPA3", layer = "SPA3_VMS_StrataBrierLurcher")
 poly.SMB <- st_read("Y:/Inshore/Databases/Scallsur/SPA3", layer = "SMB")
-#poly.SMB <- st_read("Y:/Inshore/Databases/Scallsur/SPA3", layer = "SMB")
 
 
 
-#### Import Mar-scal functions for Pectinid Projector
+
+#### Import Mar-scal functions
 
 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
 dir <- getwd()
 for(fun in funcs) 
@@ -166,7 +161,7 @@ logs$area[logs$ID%in%findPolys(events,BILU.poly)$EID]<-"BILU"
 
 #Assign fishing season (June/Oct)
 logs$season <- "June" 
-logs$season[logs$DATE_FISHED %between% c("2023-10-01", "2023-11-15")] <- "Oct" #Update date range to current season
+logs$season[logs$DATE_FISHED %between% c("2025-10-01", "2025-11-15")] <- "Oct" #Update date range to current season
 #check date ranges to make sure none fall outside fishing season
 
 table(logs$season, logs$area) #check no of records for rule of <5
@@ -269,7 +264,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 CPUE_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG)/sum(effort_h)) %>%
-  slice(5:6,1:4) %>% #reorder months, this may change depending on months fished in a given year
+  slice(5,1:4) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(CPUE_month, aes(x = month, y = `sum(DAY_CATCH_KG)/sum(effort_h)`, group =1)) +
@@ -285,7 +280,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 Landings_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG/1000)) %>%
-  slice(5:6,1:4) %>% #reorder months, this may change depending on months fished in a given year
+  slice(5,1:4) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(Landings_month, aes(x = month, y = `sum(DAY_CATCH_KG/1000)`, group =1)) +
@@ -365,7 +360,7 @@ p +
   geom_sf(data = poly.SMB, fill=NA, colour="red") +
   coord_sf(xlim = c(-66.8,-65.8), ylim = c(43.6,44.6), expand = FALSE) +
   scale_fill_binned(type = "viridis", direction = -1, name="CPUE (kg/h)") +
-  geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
+  #geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
   #annotation_scale() +
   #annotation_north_arrow(location = "tl") +
   theme(plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position

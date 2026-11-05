@@ -28,7 +28,6 @@
 # update SPA1B_TACandLandings_YYYY.xlsx with TAC and landings from monitoring report and save in the current assessment folder: Y:\INSHORE SCALLOP\BoF\YYYY\Assessment\Data\CommercialData
 # ensure date format in your SQL Developer profile is set to YYYY-MM-DD
 
-options(stringsAsFactors=FALSE)
 library(ROracle)
 library(ggplot2)
 library(RColorBrewer)
@@ -37,13 +36,12 @@ library(openxlsx)
 library(sf)
 library(lubridate)
 
-source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
 
-#### Import Mar-scal functions for Pectinid Projector
+#### Import Mar-scal functions
 
 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
 dir <- getwd()
 for(fun in funcs) 
@@ -59,16 +57,16 @@ for(fun in funcs)
 
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-fishingyear <- 2025 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 #year in which you are conducting the assessment
+fishingyear <- 2026 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 #year in which you are conducting the assessment
 un.ID=Sys.getenv("un.raperj") #ptran username
 pwd.ID=Sys.getenv("pw.raperj") #ptran password
 #un.ID=un.sameotoj #ptran username
 #pwd.ID=pw.sameotoj#ptran password
 
 #Date range for logs to be selected 
-start.date.logs <- "2024-10-01"  #YYYY-MM-DD use Oct 1 
-ends.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+start.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+ends.date.logs <- "2026-10-01"  #YYYY-MM-DD use Oct 1 
 
 
 #### Read files ####
@@ -83,8 +81,7 @@ CPUE_1B_fleet <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment/Data
 CPUE_1B_combined <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment/Data/CommercialData/CPUE_1B_combined_", (fishingyear-1), ".csv")) 	
 
 #Polygons for spatial plots
-poly.sf <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
-#poly.sf <- st_read("Y:/Inshore/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
+poly.sf <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1B_polygon_NAD83")
 poly.strata <-  st_read("Y:/People/Amy/2012 survey prep/AmyArc", layer = "SCSTRATADEFS_Polygons")
 
 
@@ -285,7 +282,7 @@ ggplot(comm.dat.combined, aes(x = year, y = cpue.kgh)) +
   scale_x_continuous("Year", breaks = seq(2003,fishingyear,5)) +
   scale_y_continuous("Catch Rate (kg/h)", limits = c(0,50), breaks = seq(0,50,10)) +
   geom_hline(aes(yintercept=median(cpue.kgh[1:(dim(comm.dat.combined)[1]-1)])), linetype = "dashed") + # median line is all years except current year
-  geom_text(x = 2009, y = 23, label = "median", size = 4)
+  geom_text(x = 2009, y = 2, label = "median", size = 4)
 #save
 ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA1B_CPUE_combined",fishingyear, ".png"), width = 24,height = 16,dpi=400,units='cm')
 
@@ -293,7 +290,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 CPUE_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG)/sum(effort_h)) %>%
-  slice(6:7,1:5) %>% #reorder months, this may change depending on months fished in a given year
+  slice(8:10,1:7) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(CPUE_month, aes(x = month, y = `sum(DAY_CATCH_KG)/sum(effort_h)`, group =1)) +
@@ -309,7 +306,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 Landings_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG/1000)) %>%
-  slice(6:7,1:5) %>% #reorder months, this may change depending on months fished in a given year
+  slice(8:10,1:7) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(Landings_month, aes(x = month, y = `sum(DAY_CATCH_KG/1000)`, group =1)) +
@@ -405,7 +402,6 @@ p <- pecjector(area =list(x=c(-66.5,-64.4), y=c(44.8,45.8), crs=4326),repo ='git
    geom_sf(data = poly.strata, fill=NA, colour="grey55") +
    coord_sf(xlim = c(-66.5,-64.4), ylim = c(44.8,45.8), expand = FALSE) +
    scale_fill_binned(type = "viridis", direction = -1, name="CPUE (kg/h)", limits = c(0, 150), breaks = c(25, 50, 75, 100, 125)) +
-   geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
    annotation_scale(location = "tl") +
    annotation_north_arrow(location = "br") +
    theme(legend.key.size = unit(5,"mm"),
@@ -418,7 +414,7 @@ p <- pecjector(area =list(x=c(-66.5,-64.4), y=c(44.8,45.8), crs=4326),repo ='git
          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.7)), #Legend bkg colour and transparency
          legend.box.margin = margin(1, 1, 1, 1))
  #save
- ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA1B_CPUEgridplot_new",fishingyear, ".png"), width=9,height=9,dpi=200,units='in')
+ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA1B_CPUEgridplot",fishingyear, ".png"), width=9,height=9,dpi=200,units='in')
  
  
  #Make histogram by area for distribution of cpue

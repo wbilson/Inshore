@@ -41,8 +41,6 @@ library(RColorBrewer)
 library(sf)
 library(lubridate)
 
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
-	
 
 #### DEFINE ####
 	
@@ -72,8 +70,6 @@ library(lubridate)
 	#polygons for assigning VMS strata to data
 	spa6IN<-read.csv("Y:/Inshore/Databases/Scallsur/SPA6_SurveyStrata/2015/SPA6_VMS_IN_R_final.csv")
 	spa6OUT<-read.csv("Y:/Inshore/Databases/Scallsur/SPA6_SurveyStrata/2015/SPA6_VMS_OUT_R_final.csv")
-	#spa6IN<-read.csv("Y:/Inshore/Databases/Scallsur/SPA6_SurveyStrata/2015/SPA6_VMS_IN_R_final.csv")
-	#spa6OUT<-read.csv("Y:/Inshore/Databases/Scallsur/SPA6_SurveyStrata/2015/SPA6_VMS_OUT_R_final.csv")
 	attr(spa6IN,"projection") <- "LL"
 	attr(spa6OUT,"projection") <- "LL"
 	
@@ -87,11 +83,12 @@ library(lubridate)
 	 Land <- st_read("Y:/GISdata/Private/AtlanticUSCdnCoast", layer = "MAR_Maine")
 
 
-	 #### Import Mar-scal functions for Pectinid Projector
+	 #### Import Mar-scal functions 
 	
-	funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
-	           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
-	           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
+	 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
+	            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+	            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
+	            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
 	dir <- getwd()
 	for(fun in funcs)
 	{

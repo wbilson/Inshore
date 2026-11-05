@@ -24,7 +24,6 @@
 # update SPA4and5_TACandLandings_YYYY.xlsx with TAC and landings from monitoring report and save in the current assessment folder: Y:\INSHORE SCALLOP\BoF\YYYY\Assessment\Data\CommercialData
 # ensure date format in your SQL Developer profile is set to YYYY-MM-DD
 
-options(stringsAsFactors=FALSE)
 library(ROracle)
 library(ggplot2)
 library(RColorBrewer)
@@ -32,15 +31,15 @@ library(openxlsx)
 library(sf) 
 library(lubridate)
 
-source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
 
 
-#### Import Mar-scal functions for Pectinid Projector
+#### Import Mar-scal functions 
 
 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
+dir <- getwd()
 dir <- getwd()
 for(fun in funcs) 
 {
@@ -55,14 +54,14 @@ for(fun in funcs)
 
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-fishingyear <- 2025 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 #year in which you are conducting the assessment
+fishingyear <- 2026 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 #year in which you are conducting the assessment
 un.ID=Sys.getenv("un.raperj") #ptran username
 pwd.ID=Sys.getenv("pw.raperj") #ptran password
 
 #Date range for logs to be selected 
-start.date.logs <- "2024-10-01"  #YYYY-MM-DD use Oct 1 
-ends.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+start.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+ends.date.logs <- "2026-10-01"  #YYYY-MM-DD use Oct 1 
 
 #### Read files ####
 
@@ -70,7 +69,6 @@ ends.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1
 tacq<-read.xlsx(paste0(direct,"/",assessmentyear,"/Assessment/Data/CommercialData/SPA4and5_TACandLandings_", 
                        fishingyear, ".xlsx"), sheet = "TACandLandings")
 tacq4<-read.csv("Y:/Inshore/Assessment/BoF/CommercialData/Archive/2014/SPA4_TACandLandings_2014.csv") # DO NOT UPDATE - historial data 
-#tacq4<-read.csv("Y:/Inshore/BoF/CommercialData/Archive/2014/SPA4_TACandLandings_2014.csv") # DO NOT UPDATE - historial data 
 
 #CPUE csv files from previous year
 CPUE_spa4 <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment/Data/CommercialData/CPUE_spa4_", fishingyear-1, ".csv")) 
@@ -79,9 +77,7 @@ CPUE_spa5 <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment/Data/Com
 #Polygons for spatial plots
 
 poly.sf4 <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA4_polygon_NAD83")
-#poly.sf4 <- st_read("Y:/Inshore/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA4_polygon_NAD83")
 poly.sf5 <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA5_polygon_NAD83")
-#poly.sf5 <- st_read("Y:/Inshore/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA5_polygon_NAD83")
 poly.strata <- st_read("Y:/People/Amy/2012 survey prep/AmyArc", layer = "SCSTRATADEFS_Polygons")
 
 
@@ -211,7 +207,6 @@ write.csv(comm.dat.spa5, paste0(direct,"/",assessmentyear,"/Assessment/Data/Comm
 #### Time Series Plots ####
 
 #SPA4 CPUE time series:
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4_CPUE",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot(comm.dat.spa4, aes(x = year, y = cpue.kgh)) +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + 
   geom_point() +
@@ -220,10 +215,9 @@ ggplot(comm.dat.spa4, aes(x = year, y = cpue.kgh)) +
   scale_y_continuous("Catch Rate (kg/h)", limits = c(0,110), breaks = seq(0,110,10)) +
   geom_hline(aes(yintercept=median(cpue.kgh[1:(dim(comm.dat.spa4)[1]-1)])), linetype = "dashed") + # median line is all years except current year
   geom_text(x = 1998, y = 22, label = "median")
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4_CPUE",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 #SPA5 CPUE time series:
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA5_CPUE",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot(comm.dat.spa5, aes(x = year, y = cpue.kgh)) +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + 
   geom_point() +
@@ -232,7 +226,7 @@ ggplot(comm.dat.spa5, aes(x = year, y = cpue.kgh)) +
   scale_y_continuous("Catch Rate (kg/h)", limits = c(0,60), breaks = seq(0,60,10)) +
   geom_hline(aes(yintercept=median(cpue.kgh[1:(dim(comm.dat.spa5)[1]-1)])), linetype = "dashed") + # median line is all years except current year
   geom_text(x = 1998, y = 22, label = "median")
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4_CPUE",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 #CPUE by month
 CPUE_month <- logs %>% 
@@ -269,7 +263,6 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 
 
 #SPA4 CPUE and Effort (fishery-level)
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4CPUEandEffort",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot(comm.dat.spa4) +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + 
   theme(axis.line.y.right = element_line(color = "red"), axis.ticks.y.right = element_line(color = "red"), axis.text.y.right = element_text(color = "red")) +
@@ -279,10 +272,9 @@ ggplot(comm.dat.spa4) +
   geom_line(aes(x = year, y = effort.fleet.1000h*2), color = "red", linetype = "dashed") +
   scale_y_continuous("CPUE (kg/h)", sec.axis = sec_axis(~./2, name = "Effort (1000h)", breaks = seq(0,50,10))) + # 
   scale_x_continuous("Year", breaks=seq(1984,fishingyear,2)) 
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4_CPUEandEffort",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 #SPA5 CPUE and Effort (fishery-level)
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA5CPUEandEffort",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot(comm.dat.spa5) +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + 
   theme(axis.line.y.right = element_line(color = "red"), axis.ticks.y.right = element_line(color = "red"), axis.text.y.right = element_text(color = "red")) +
@@ -292,7 +284,7 @@ ggplot(comm.dat.spa5) +
   geom_line(aes(x = year, y = effort.fleet.1000h*10), color = "red", linetype = "dashed") +
   scale_y_continuous("CPUE (kg/h)", sec.axis = sec_axis(~./10, name = "Effort (1000h)", breaks = seq(0,5,1))) + # 
   scale_x_continuous("Year", limits = c(1984, fishingyear), breaks=seq(1984,fishingyear,2)) 
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA5_CPUEandEffort",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 
 #TAC and Landings
@@ -303,7 +295,6 @@ names(tacq4) <- "TAC"
 tacq4$year <- as.numeric(substr(rownames(tacq4), 2,5))+1
 
 #Plot SPA 4 & 5 landings with TAC lines
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_TACandLandings",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot() +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + # white background, no gridlines
   geom_bar(data=landings[landings$variable%in%c('SPA4','SPA5'),], aes(year, catch.fleet.mt, fill=factor(variable, levels = c("SPA5", "SPA4"))), colour="black", stat="identity") + 
@@ -315,10 +306,9 @@ ggplot() +
   annotate(geom="text",label="SPA 4 and 5 TAC", x=2014, y= 300) + 
   annotate(geom="text",label="SPA 4 TAC", x=2004, y= 1350) +
   theme(legend.position=c(0.85, 0.85)) # play with the location if you want it inside the plotting panel
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_TACandLandings",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 #SPA 4 & 5 TAC and Landings with truncated x-axis for presentations
-png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_TACandLandings_pres",fishingyear, ".png"), 24,20,res=400,units='cm')
 ggplot() +
   theme_bw(base_size = 16) + theme(panel.grid=element_blank()) + # white background, no gridlines
   geom_bar(data=landings[landings$variable%in%c('SPA4','SPA5'),], aes(year, catch.fleet.mt, fill=factor(variable, levels = c("SPA5", "SPA4"))), colour="black", stat="identity") + 
@@ -330,11 +320,10 @@ ggplot() +
   annotate(geom="text",label="SPA 4 and 5 TAC", x=2014, y= 240) + 
   annotate(geom="text",label="SPA 4 TAC", x=2009, y= 140) +
   theme(legend.position=c(0.7, 0.85)) # play with the location if you want it inside the plotting panel
-dev.off()
+ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_TACandLandings_pres",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 
 #### Catch and effort with linear model ####
- png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_CatchandEffort",fishingyear, ".png"), 24,20,res=400,units='cm')
  ggplot(logs, aes(x = effort_h, y = DAY_CATCH_KG)) +
    theme_bw() + theme(panel.grid=element_blank()) +
    geom_point() +
@@ -342,7 +331,7 @@ dev.off()
    scale_y_continuous("Catch (meats, kg)") + #
    scale_x_continuous("Effort (h)") +
    facet_wrap(~ASSIGNED_AREA, scales = "free")
- dev.off()
+ ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_CatchandEffort",fishingyear, ".png"), width = 9.5, height = 8, dpi = 300,units='in')
 
 
 #### Spatial Plots ####
@@ -369,13 +358,12 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
  sf::sf_use_s2(FALSE)
  
  ##add sf objects to basemap outside of pecjector
- png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_CPUEgridplot_new",fishingyear, ".png"), 9,9,res=200,units='in')
  p +
    geom_tile(df, mapping = aes(lon, lat, fill = mean.cpue), color = "grey55") +
    geom_sf(data = poly.strata, fill=NA, colour="grey55") +
    coord_sf(xlim = c(-66.2,-65.5), ylim = c(44.46,45), expand = F) +
    scale_fill_binned(type = "viridis", direction = -1, name="CPUE (kg/h)", breaks = c(25, 50, 75)) +
-   geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
+   #geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
    theme(plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
            axis.title = element_text(size = 12),
            axis.text = element_text(size = 10),
@@ -384,7 +372,7 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
            legend.position = c(.88,.15), 
            legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)), #Legend bkg colour and transparency
            legend.box.margin = margin(1, 1, 1, 1)) #Legend bkg margin (top, right, bottom, left)
- dev.off()
+ ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_CPUEgridplot",fishingyear, ".png"), width = 9, height = 9, dpi = 300,units='in')
  
 
  # Make histogram by area for distribution of cpue
@@ -417,7 +405,6 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
 
 
  ##add sf objects to basemap outside of pecjector
- png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_Catchgridplot",fishingyear, ".png"), 9,9,res=200,units='in')
  p +
    geom_tile(df, mapping = aes(lon, lat, fill = tot.catch), color = "grey55") +
    geom_sf(data = poly.strata, fill=NA, colour="grey55") +
@@ -431,7 +418,7 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
          legend.position = c(.88,.15), 
          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)), #Legend bkg colour and transparency
          legend.box.margin = margin(1, 1, 1, 1)) #Legend bkg margin (top, right, bottom, left)
- dev.off()
+ ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_Catchgridplot",fishingyear, ".png"), width = 9, height = 9, dpi = 300,units='in')
  
  
 #Effort Grid Plot
@@ -449,7 +436,6 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
  names(df) <- c("lon", "lat", "tot.effort")
  
  ##add sf objects to basemap outside of pecjector
- png(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_Effortgridplot",fishingyear, ".png"), 9,9,res=200,units='in')
  p +
    geom_tile(df, mapping = aes(lon, lat, fill = tot.effort), color = "grey55") +
    geom_sf(data = poly.strata, fill=NA, colour="grey55") +
@@ -463,5 +449,5 @@ p <- pecjector(area =list(x=c(-66.2,-65.5), y=c(44.46,45), crs=4326),repo ='gith
          legend.position = c(.88,.15), 
          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.8)), #Legend bkg colour and transparency
          legend.box.margin = margin(1, 1, 1, 1)) #Legend bkg margin (top, right, bottom, left)
- dev.off()
+ ggsave(file = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA4and5_Effortgridplot",fishingyear, ".png"), width = 9, height = 9, dpi = 300,units='in')
  

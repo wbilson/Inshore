@@ -471,7 +471,7 @@ stats.output <- BoF.model.stats(area = "3", assessmentyear=assessmentyear, surve
 
 
 
-# Probability that current year commercial biomass estimate is in the Healthy zone (i.e. above the USR), and in the cautious zone (ie. interpret as being above the LRP  and below the USR (i.e. 1- prob>USR): 
+#### Probability that current year commercial biomass estimate is in the Healthy zone (i.e. above the USR), and in the cautious zone (ie. interpret as being above the LRP  and below the USR (i.e. 1- prob>USR): ####
 # Get the biomass posteriors for every year
 B.dat <- mod.res$sims.matrix[, is.element(substr(dimnames(mod.res$sims.matrix)[[2]], 1, 2), "B[")]
 #colnames(B.dat)
@@ -482,9 +482,20 @@ B.dat.current.year <- B.dat[,dim(B.dat)[2]]
 #probabilty that current year biomass is above the USR and above the LRP 
 prob.above.USR <- sum(B.dat.current.year > USR)/length(B.dat.current.year)
 prob.above.USR
+
 prob.above.LRP <- sum(B.dat.current.year > LRP)/length(B.dat.current.year)
 prob.above.LRP
 
+prob.below.LRP <- sum(B.dat.current.year < LRP)/length(B.dat.current.year)
+prob.below.LRP
+
+#Prob in cautious zone is P.above.LRP MINUS P.above.USR
+prob.in.cautious <- prob.above.LRP - prob.above.USR
+prob.in.cautious
+
+#total dist to check is Prob in Cautious + prob.above.USR + prob.below.LRP should equal 1 thus below should be TRUE
+# IF NOT TRUE WE HAVE A PROBLEM!!!!! 
+ 1 == (prob.in.cautious + prob.above.USR + prob.below.LRP) 
 
 #Save out key results and diagnostics -- use this workspace to source for .Rmd Update doc (Note can easily take 5 mins or so to save out)
 #Objects saved out: LRP, USR, catch.next.year, min.neff, Rhat, temp, summ.Spa1A, decision, decision.table,  prob.above.USR, prob.above.LRP

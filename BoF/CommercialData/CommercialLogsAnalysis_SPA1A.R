@@ -24,7 +24,6 @@
 # ensure date format in your SQL Developer profile is set to YYYY-MM-DD
 
 
-options(stringsAsFactors=FALSE)
 library(ROracle)
 library(ggplot2)
 library(RColorBrewer)
@@ -33,14 +32,13 @@ library(sf)
 library(lubridate)
 library(dplyr)
 
-source("Y:/Inshore/Assessment/BoF/Assessment_fns/convert.dd.dddd.r")
-#source("Y:/Inshore/BoF/Assessment_fns/convert.dd.dddd.r")
 
 
-#### Import Mar-scal functions for Pectinid Projector
+#### Import Mar-scal functions
 
 funcs <- c("https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/convert_coords.R",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/add_alpha_function.R",
+           "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r",
            "https://raw.githubusercontent.com/Mar-scal/Assessment_fns/master/Maps/pectinid_projector_sf.R")
 dir <- getwd()
 for(fun in funcs) 
@@ -56,16 +54,16 @@ for(fun in funcs)
 
 direct <- "Y:/Inshore/Assessment/BoF"
 #direct <- "Y:/Inshore/BoF"
-fishingyear <- 2025 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
-assessmentyear <- 2025 #year in which you are conducting the assessment
+fishingyear <- 2026 #most recent year of commercial fishing data to be used (e.g. if fishing season is 2019/2020, use 2020)
+assessmentyear <- 2026 #year in which you are conducting the assessment
 un.ID=Sys.getenv("un.raperj") #ptran username
 pwd.ID=Sys.getenv("pw.raperj") #ptran password
 #un.ID=un.sameotoj #ptran username
 #pwd.ID=pw.sameotoj#ptran password
 
 #Date range for logs to be selected 
-start.date.logs <- "2024-10-01"  #YYYY-MM-DD use Oct 1 
-ends.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+start.date.logs <- "2025-10-01"  #YYYY-MM-DD use Oct 1 
+ends.date.logs <- "2026-10-01"  #YYYY-MM-DD use Oct 1 
 
 
 #### Read files ####
@@ -79,7 +77,6 @@ CPUE_1A <- read.csv(paste0(direct,"/",(assessmentyear-1),"/Assessment/Data/Comme
 
 #Polygons for spatial plots
 poly.sf <- st_read("Y:/GISdata/Private/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
-#poly.sf <- st_read("Y:/Inshore/BoFBoundaries/SPABoundaries_Redrawn2014/SPA New Polys/shp polygons", layer = "SPA1A_polygon_NAD83")
 poly.strata <- st_read("Y:/People/Amy/2012 survey prep/AmyArc", layer = "SCSTRATADEFS_Polygons")
 
 
@@ -207,7 +204,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 CPUE_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG)/sum(effort_h)) %>%
-  slice(5:7,1:4) %>% #reorder months, this may change depending on months fished in a given year
+  slice(9:11,1:8) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(CPUE_month, aes(x = month, y = `sum(DAY_CATCH_KG)/sum(effort_h)`, group =1)) +
@@ -223,7 +220,7 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
 Landings_month <- logs %>% 
   group_by(month) %>%
   summarise(sum(DAY_CATCH_KG/1000)) %>%
-  slice(5:7,1:4) %>% #reorder months, this may change depending on months fished in a given year
+  slice(9:11,1:8) %>% #reorder months, this may change depending on months fished in a given year
   mutate(month = factor(month, levels=unique(month))) #so months will plot in correct order
 
 ggplot(Landings_month, aes(x = month, y = `sum(DAY_CATCH_KG/1000)`, group =1)) +
@@ -292,17 +289,13 @@ ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/Commerc
  df <- (as.data.frame(raster::rasterToPoints(raster.data)))
  names(df) <- c("lon", "lat", "mean.cpue")
 
- shp <- readOGR("Y:/Inshore/Admin/Request_and_Review_Tracking/Aquaculture_Reviews/shp/SMB_proposed_Aquaculture_sites.shp")
- #shp <- readOGR("Y:/Admin/Request_and_Review_Tracking/Aquaculture_Reviews/shp/SMB_proposed_Aquaculture_sites.shp")
-  
  ##add sf objects to basemap outside of pecjector
  
 p +
    geom_tile(df, mapping = aes(lon, lat, fill = mean.cpue), color = "grey55") +
    geom_sf(data = poly.strata, fill=NA, colour="grey55") +
    coord_sf(xlim = c(-66.5,-64.5), ylim = c(44.2,45.4), expand = FALSE) +
-   scale_fill_binned(type = "viridis", direction = -1, name="CPUE (kg/h)", breaks = c(25, 50, 75, 100, 125, 150, 175), limits = c(0,200)) +
-   geom_polygon(data = shp, aes(x = long, y = lat, group = group), fill="grey55") +
+   scale_fill_binned(type = "viridis", direction = -1, name="CPUE (kg/h)", breaks = c(25, 50, 75, 100), limits = c(0,125)) +
    annotation_scale() +
    annotation_north_arrow(location = "br") +
    theme(plot.title = element_text(size = 14, hjust = 0.5), #plot title size and position
@@ -314,7 +307,7 @@ p +
          legend.box.background = element_rect(colour = "white", fill= alpha("white", 0.7)), #Legend bkg colour and transparency
          legend.box.margin = margin(6, 8, 6, 8)) #Legend bkg margin (top, right, bottom, left)
 #save
-ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA1A_CPUEgridplot_new",fishingyear, ".png"), width = 9,height = 9,dpi= 200,units='in')
+ggsave(filename = paste0(direct, "/",assessmentyear,"/Assessment/Figures/CommercialData/SPA1A_CPUEgridplot",fishingyear, ".png"), width = 9,height = 9,dpi= 200,units='in')
  
  
  # Make histogram by area for distribution of cpue
